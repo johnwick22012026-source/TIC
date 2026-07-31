@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.models.game_result import GameOutcome, GameResult
+from app.models.game_result import GameOutcome, GameResult, GameMode
 from app.db.session import SessionLocal
 from app.services.turn import reset_game_state
 
@@ -33,6 +33,7 @@ def test_reset_game_state_service_returns_fresh_board() -> None:
     assert result.winning_cells is None
     assert result.is_terminal is False
     assert result.o_move == -1
+    assert result.mode == GameMode.SINGLE
 
 
 def test_reset_endpoint_returns_clean_game_state() -> None:
@@ -47,6 +48,7 @@ def test_reset_endpoint_returns_clean_game_state() -> None:
     assert data["current_player"] == "X"
     assert data.get("winner") is None
     assert data.get("winning_cells", []) == []
+    assert data.get("mode") == GameMode.SINGLE.value
 
 
 def test_reset_does_not_clear_persisted_scoreboard_totals() -> None:
@@ -98,3 +100,39 @@ def test_reset_accepts_versus_mode_selection() -> None:
     assert data["current_player"] == "X"
     assert data["status"] == GameOutcome.IN_PROGRESS.value
     assert data["o_move"] == -1
+
+
+def test_play_turn_includes_mode_single_player() -> None:
+    response = client.post(
+        "/api/play",
+        json={
+            "board": [""] * 9,
+            "x_move": 0,
+            "mode": GameMode.SINGLE.value,
+            "random_seed": 1,
+        },
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["mode"] == GameMode.SINGLE.value
+    assert data["o_move"] != -1
+    assert data["current_player"] == "X"
+
+
+def test_play_turn_respects_versus_mode_by_skipping_computer_move() -> None:
+    response = client.post(
+        "/api/play",
+        json={
+            "board": [""] * 9,
+            "x_move": 4,
+            "mode": GameMode.VERSUS.value,
+        },
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["mode"] == GameMode.VERSUS.value
+    assert data["o_move"] == -1
+    assert data["current_player"] == "O"
+    assert data["status"] == GameOutcome.IN_PROGRESS.value

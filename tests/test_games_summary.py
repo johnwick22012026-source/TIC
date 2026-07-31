@@ -1,16 +1,20 @@
 from datetime import datetime, timezone
 
-import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
 from app.db.session import SessionLocal
+from app.main import app
 from app.models.game_result import GameOutcome, GameResult
 
 client = TestClient(app)
 
 
-def _create_result(session, winner: str, status: GameOutcome, board_snapshot: str = "[]") -> GameResult:
+def _create_result(
+    session: SessionLocal,
+    winner: str,
+    status: GameOutcome,
+    board_snapshot: str = "[]",
+) -> GameResult:
     record = GameResult(
         winner=winner,
         status=status,
@@ -19,17 +23,6 @@ def _create_result(session, winner: str, status: GameOutcome, board_snapshot: st
     )
     session.add(record)
     return record
-
-
-@pytest.fixture(autouse=True)
-def clean_database() -> None:
-    session = SessionLocal()
-    try:
-        session.query(GameResult).delete()
-        session.commit()
-        yield
-    finally:
-        session.close()
 
 
 def test_summary_returns_zero_totals_when_no_finished_games_exist() -> None:

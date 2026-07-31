@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..models.game_result import GameOutcome, GameResult
-from ..schemas.game import GameCreate, ScoreSummary
+from ..schemas.game import GameCreate, ScoreSummary, GamesSummary
 
 
 def _status_for_winner(winner: str) -> GameOutcome:
@@ -64,3 +64,25 @@ def get_score_summary(db: Session) -> List[ScoreSummary]:
     )
     rows = db.execute(stmt).all()
     return [ScoreSummary(winner=row[0], wins=int(row[1])) for row in rows]
+
+
+def get_games_summary(db: Session) -> GamesSummary:
+    """
+    Query the database for total wins of player X, wins of computer O, and draws.
+    Only finished games (status != IN_PROGRESS) are counted.
+    """
+    # Count human player (X) wins
+    x_wins_stmt = select(func.count(GameResult.id)).where(GameResult.status == GameOutcome.X_WIN)
+    x_wins = db.execute(x_wins_stmt).scalar_one()
+    # Count computer (O) wins
+    o_wins_stmt = select(func.count(GameResult.id)).where(GameResult.status == GameOutcome.O_WIN)
+    o_wins = db.execute(o_wins_stmt).scalar_one()
+    # Count draws
+    draw_stmt = select(func.count(GameResult.id)).where(GameResult.status == GameOutcome.DRAW)
+    draws = db.execute(draw_stmt).scalar_one()
+
+    return GamesSummary(
+        player_wins=int(x_wins),
+        computer_wins=int(o_wins),
+        draws=int(draws),
+    )

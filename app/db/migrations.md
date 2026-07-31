@@ -6,9 +6,13 @@
 
 2. **Migration Strategy**
    - For early development, `Base.metadata.create_all()` gives a quick way to ensure tables exist.
-   - When schema changes are required, add Alembic to the project and generate revision files.
+   - When schema changes are required, add Alembic to the project and generate revision files. The model backs the schema for finished games, so ensure each migration makes the same schema changes defined in `app/models/`.
    - `app/db/init.py` should continue to be the lightweight bootstrap, but migrations should become the source of truth for breaking changes.
 
-3. **Local Development Workflow**
+3. **Persisting Terminal Outcomes**
+   - Game results now store a terminal `status` (one of `in_progress`, `x_win`, `o_win`, `draw`), a dedicated `outcome_id` UUID for the terminal record, and a `recorded_at` timestamp alongside the existing `completed_at` field. This lets you track when a game was finished and when the terminal result was recorded.
+   - Queries for completed games should filter on `status` values other than `in_progress` and can use `completed_at` vs `recorded_at` depending on whether you care about the end of play or when the backend persisted the result.
+
+4. **Local Development Workflow**
    - Keep the database file under version control only if the project explicitly needs example data; otherwise, include `app/data/` in `.gitignore` and recreate the file fresh.
    - Consider wrapping `init_db()` inside a CLI script or FastAPI startup event once the backend needs to serve stored results.

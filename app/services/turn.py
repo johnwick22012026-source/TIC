@@ -6,7 +6,7 @@ import random
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
-from ..models.game_result import GameOutcome
+from ..models.game_result import GameOutcome, GameMode
 
 WIN_LINES: Tuple[Tuple[int, int, int], ...] = (
     (0, 1, 2),
@@ -29,6 +29,7 @@ class TurnResolution:
     is_terminal: bool
     current_player: Optional[str]
     winning_cells: Optional[Tuple[int, int, int]]
+    mode: GameMode
 
 
 def _evaluate_board(board: List[str]) -> GameOutcome:
@@ -67,18 +68,22 @@ def _current_player_for_status(status: GameOutcome) -> Optional[str]:
 
 
 def resolve_turn(
-    board: List[str], x_index: int, rand: Optional[random.Random] = None
+    board: List[str],
+    x_index: int,
+    mode: GameMode,
+    rand: Optional[random.Random] = None,
 ) -> TurnResolution:
     """
-    Apply the player's X move to the board at x_index, then pick a random empty cell for O.
+    Apply the player's X move to the board at x_index, then pick a random empty cell for O in single-player mode.
 
     Args:
         board: A list of 9 strings representing the current board; empty string for empty cells.
         x_index: The index (0-8) where X is to move.
+        mode: Selected match mode to determine whether the computer should play O.
         rand: Optional random.Random instance for deterministic choice; if None, uses module random.
 
     Returns:
-        A TurnResolution describing the new board state, the O move, and terminal outcome.
+        A TurnResolution describing the new board state, the O move (if any), and terminal outcome.
 
     Raises:
         ValueError: If board length is not 9, x_index is out of range, the target cell is occupied,
@@ -113,6 +118,19 @@ def resolve_turn(
             is_terminal=True,
             current_player=None,
             winning_cells=winning_cells_after_x,
+            mode=mode,
+        )
+
+    if mode == GameMode.VERSUS:
+        return TurnResolution(
+            board=new_board,
+            o_move=-1,
+            status=status_after_x,
+            winner=None,
+            is_terminal=False,
+            current_player="O",
+            winning_cells=None,
+            mode=mode,
         )
 
     available = [i for i, value in enumerate(new_board) if not value]
@@ -125,6 +143,7 @@ def resolve_turn(
             is_terminal=True,
             current_player=None,
             winning_cells=None,
+            mode=mode,
         )
 
     o_index = rng.choice(available)
@@ -142,10 +161,11 @@ def resolve_turn(
         is_terminal=is_terminal,
         current_player=_current_player_for_status(status_after_o),
         winning_cells=winning_cells_after_o,
+        mode=mode,
     )
 
 
-def reset_game_state() -> TurnResolution:
+def reset_game_state(mode: GameMode = GameMode.SINGLE) -> TurnResolution:
     """Return a fresh, empty board with transient game state reset to the starting player while leaving all persisted scoreboard data untouched."""
     empty_board = [""] * 9
     return TurnResolution(
@@ -156,4 +176,5 @@ def reset_game_state() -> TurnResolution:
         is_terminal=False,
         current_player="X",
         winning_cells=None,
+        mode=mode,
     )

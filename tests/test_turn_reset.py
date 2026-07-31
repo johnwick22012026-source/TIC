@@ -72,3 +72,29 @@ def test_reset_does_not_clear_persisted_scoreboard_totals() -> None:
     scoreboard_after = client.get("/api/games/scoreboard")
     assert scoreboard_after.status_code == 200
     assert scoreboard_after.json() == scoreboard_before.json()
+
+
+def test_reset_defaults_to_single_player_mode() -> None:
+    response = client.post("/api/play/reset")
+    assert response.status_code == 200
+
+    data = response.json()
+    mode = data.get("mode")
+    assert isinstance(mode, str)
+    assert "single" in mode.lower()
+    assert data["current_player"] == "X"
+    assert data["status"] == GameOutcome.IN_PROGRESS.value
+    assert data["o_move"] == -1
+
+
+def test_reset_accepts_versus_mode_selection() -> None:
+    response = client.post("/api/play/reset?mode=versus")
+    assert response.status_code == 200
+
+    data = response.json()
+    mode = data.get("mode")
+    assert isinstance(mode, str)
+    assert "versus" in mode.lower()
+    assert data["current_player"] == "X"
+    assert data["status"] == GameOutcome.IN_PROGRESS.value
+    assert data["o_move"] == -1

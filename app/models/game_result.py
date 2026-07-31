@@ -7,13 +7,22 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from sqlalchemy import Column, DateTime, Enum as SQLEnum, String, Text
-from sqlalchemy.sql import func
+from sqlalchemy import Column, DateTime, Enum as SQLEnum, Index, String, Text, func
 
 from ..db.base import Base
 
 
+class Winner(str, Enum):
+    """Permitted winner values for a finished Tic-Tac-Toe game."""
+
+    X = "X"
+    O = "O"
+    DRAW = "draw"
+
+
 class GameOutcome(str, Enum):
+    """Status values used to describe the terminal state of a recorded match."""
+
     IN_PROGRESS = "in_progress"
     X_WIN = "x_won"
     O_WIN = "o_won"
@@ -32,8 +41,8 @@ class GameResults(Base):
         unique=True,
         nullable=False,
     )
-    winner: str = Column(
-        String(32),
+    winner: Winner = Column(
+        SQLEnum(Winner, name="game_winner", native_enum=False),
         nullable=False,
         index=True,
     )
@@ -42,6 +51,7 @@ class GameResults(Base):
         nullable=False,
         default=GameOutcome.IN_PROGRESS,
         server_default=GameOutcome.IN_PROGRESS.value,
+        index=True,
     )
     board_snapshot: str = Column(
         Text,
@@ -54,13 +64,26 @@ class GameResults(Base):
     completed_at: datetime = Column(
         DateTime(timezone=True),
         nullable=False,
+        default=func.now(),
         server_default=func.now(),
     )
     recorded_at: datetime = Column(
         DateTime(timezone=True),
         nullable=False,
+        default=func.now(),
         server_default=func.now(),
     )
+
+    __table_args__ = (
+        Index("idx_game_results_status", "status"),
+        Index("idx_game_results_winner", "winner"),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover - representation helper
+        return (
+            f"<GameResults id={self.id} winner={self.winner} status={self.status} "
+            f"completed_at={self.completed_at}>"
+        )
 
 
 GameResult = GameResults

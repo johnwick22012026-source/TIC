@@ -5,8 +5,9 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 
-from sqlalchemy import Column, DateTime, String
+from sqlalchemy import Column, DateTime, Enum as SQLEnum, String, Text
 from sqlalchemy.sql import func
 
 from ..db.base import Base
@@ -34,11 +35,31 @@ class GameResults(Base):
     winner: str = Column(
         String(32),
         nullable=False,
+        index=True,
     )
-    played_at: datetime = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
+    status: GameOutcome = Column(
+        SQLEnum(GameOutcome, name="game_outcome", native_enum=False),
         nullable=False,
+        default=GameOutcome.IN_PROGRESS,
+        server_default=GameOutcome.IN_PROGRESS.value,
+    )
+    board_snapshot: str = Column(
+        Text,
+        nullable=False,
+    )
+    summary: Optional[str] = Column(
+        Text,
+        nullable=True,
+    )
+    completed_at: datetime = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    recorded_at: datetime = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
     )
 
 

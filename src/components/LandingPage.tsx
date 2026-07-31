@@ -1,4 +1,6 @@
 import "../styles/global.css"
+import Board from "./Board"
+import Scoreboard from "./Scoreboard"
 
 const scoreData = [
   { label: "X Wins", value: 7 },
@@ -21,30 +23,21 @@ export default function LandingPage() {
           </p>
         </header>
 
-        <section className="board-region" aria-label="Tic tac toe board placeholder">
-          <div className="board-grid">
-            {boardCells.map((_, index) => (
-              <div key={index} className="board-cell" aria-hidden="true" />
-            ))}
-          </div>
-        </section>
+        <Board
+          cells={boardCells}
+          heading="3 × 3 Battle Grid"
+          description="Place your move and await the computer response."
+        />
 
         <div className="status-area">
           <p className="status-text">Player X&apos;s turn · Computer ready</p>
           <button className="new-game">New Game</button>
         </div>
 
-        <section className="scoreboard">
-          <h2>Scoreboard</h2>
-          <div className="score-grid">
-            {scoreData.map((stat) => (
-              <article key={stat.label} className="score-card">
-                <p className="score-label">{stat.label}</p>
-                <p className="score-value">{stat.value}</p>
-              </article>
-            ))}
-          </div>
-        </section>
+        <Scoreboard
+          stats={scoreData}
+          description="Persistent win/draw totals keep your progress visible."
+        />
       </div>
     </div>
   )

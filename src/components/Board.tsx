@@ -31,6 +31,14 @@ export default function Board({
       <div className="board-grid" role="grid">
         {cells.map((value, index) => {
           const isWinningCell = winningIndexSet.has(index)
+          const symbolClassNames = [
+            "board-symbol",
+            value === "X" ? "board-symbol--x" : "",
+            value === "O" ? "board-symbol--o" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")
+
           return (
             <button
               key={index}
@@ -40,7 +48,7 @@ export default function Board({
               disabled={disabled || !isInteractive || Boolean(value)}
               aria-label={`Cell ${index + 1} ${value ? `holds ${value}` : "is empty"}`}
             >
-              <span className="board-symbol">{value}</span>
+              <span className={symbolClassNames}>{value}</span>
             </button>
           )
         })}

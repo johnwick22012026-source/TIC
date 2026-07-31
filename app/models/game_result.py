@@ -29,6 +29,13 @@ class GameOutcome(str, Enum):
     DRAW = "draw"
 
 
+class GameMode(str, Enum):
+    """Configured match modes that can be persisted with a result."""
+
+    SINGLE = "single"
+    VERSUS = "versus"
+
+
 class GameResults(Base):
     """Persistent record for a single finished game outcome."""
 
@@ -51,6 +58,13 @@ class GameResults(Base):
         nullable=False,
         default=GameOutcome.IN_PROGRESS,
         server_default=GameOutcome.IN_PROGRESS.value,
+        index=True,
+    )
+    mode: GameMode = Column(
+        SQLEnum(GameMode, name="game_mode", native_enum=False),
+        nullable=False,
+        default=GameMode.SINGLE,
+        server_default=GameMode.SINGLE.value,
         index=True,
     )
     board_snapshot: str = Column(
@@ -79,12 +93,13 @@ class GameResults(Base):
         Index("idx_game_results_winner", "winner"),
         Index("idx_game_results_completed_at", "completed_at"),
         Index("idx_game_results_recorded_at", "recorded_at"),
+        Index("idx_game_results_mode", "mode"),
     )
 
     def __repr__(self) -> str:  # pragma: no cover - representation helper
         return (
             f"<GameResults id={self.id} winner={self.winner} status={self.status} "
-            f"completed_at={self.completed_at}>"
+            f"mode={self.mode} completed_at={self.completed_at}>"
         )
 
 

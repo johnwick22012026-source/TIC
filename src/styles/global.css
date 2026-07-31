@@ -97,26 +97,16 @@ body {
   mix-blend-mode: screen;
 }
 
-.board-panel--disabled {
-  filter: saturate(0.75) brightness(0.9);
+.board-panel--disabled::after {
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.25), transparent 60%);
 }
 
-.board-panel--disabled .board-grid {
-  cursor: not-allowed;
+.board-panel--disabled {
+  filter: grayscale(0.3) brightness(0.9);
 }
 
 .board-panel--disabled .board-cell {
   cursor: not-allowed;
-  color: rgba(248, 250, 252, 0.45);
-  border-color: rgba(148, 163, 184, 0.4);
-  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.7);
-  opacity: 0.82;
-}
-
-.board-panel h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  letter-spacing: 0.02em;
 }
 
 .board-description {
@@ -136,7 +126,22 @@ body {
   border: 1px solid rgba(15, 23, 42, 0.6);
 }
 
+.board-grid--disabled {
+  cursor: not-allowed;
+}
+
+.board-grid--disabled::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(15, 23, 42, 0.65);
+  pointer-events: none;
+}
+
 .board-cell {
+  /* reset default button padding so grid cells stay square */
+  padding: 0;
   aspect-ratio: 1 / 1;
   min-height: 80px;
   background: var(--board-cell-color);
@@ -167,7 +172,7 @@ body {
 
 .board-cell:disabled {
   cursor: not-allowed;
-  opacity: 0.9;
+  opacity: 0.85;
   box-shadow: inset 0 0 10px rgba(2, 6, 23, 0.85);
 }
 

@@ -161,37 +161,66 @@ body {
   font-weight: 600;
 }
 
+/* Control section styling */
 .status-area {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
+  background: var(--card-color);
+  padding: 1rem 1.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
 }
 
 .status-text {
   margin: 0;
   color: var(--muted-color);
+  font-size: 1rem;
 }
 
+/* Button base styling */
 button {
   font: inherit;
   border: none;
   border-radius: 999px;
   padding: 0.75rem 1.8rem;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  background-color: var(--accent-color);
+  color: var(--panel-color);
+}
+
+button:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 3px;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 button:active {
   transform: translateY(2px);
 }
 
+/* Specific new game button */
 .new-game {
   background: linear-gradient(135deg, #38bdf8, #22d3ee);
   color: #0f172a;
   font-weight: 600;
   box-shadow: 0 12px 24px rgba(56, 189, 248, 0.3);
+}
+
+.new-game:hover:not(:disabled) {
+  box-shadow: 0 16px 32px rgba(56, 189, 248, 0.4);
 }
 
 .scoreboard-panel {

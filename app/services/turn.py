@@ -146,12 +146,7 @@ def resolve_turn(
 
 
 def reset_game_state() -> TurnResolution:
-    """Return a fresh, empty board with transient game state reset to the starting player.
-
-    This helper intentionally does not interact with the persistent scoreboard. Completed game
-    records in the `game_results` table stay untouched so that win/loss/draw totals remain available
-    even after a new round is initialized.
-    """
+    """Return a fresh, empty board with transient game state reset to the starting player while leaving all persisted scoreboard data untouched."""
     empty_board = [""] * 9
     return TurnResolution(
         board=empty_board,

@@ -29,15 +29,16 @@ class GameCreate(BaseModel):
     summary: Optional[str] = Field(
         None, description="Optional human-readable summary or notes about the game"
     )
-    mode: Mode = Field(
-        Mode.SINGLE,
-        description="Mode of the match ('single' for 1 vs Computer or 'versus' for local multiplayer)",
+    mode: Optional[Mode] = Field(
+        None,
+        description="Mode of the match ('single' for 1 vs Computer or 'versus' for local multiplayer)."
     )
 
 
 class GameResultResponse(BaseModel):
     id: UUID = Field(..., description="Identifier of the persisted game result")
     recorded_at: datetime = Field(..., description="Timestamp when the result was stored")
+    mode: Mode = Field(..., description="Mode that was active for the stored match")
 
 
 class ScoreSummary(BaseModel):

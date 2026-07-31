@@ -97,6 +97,22 @@ body {
   mix-blend-mode: screen;
 }
 
+.board-panel--disabled {
+  filter: saturate(0.75) brightness(0.9);
+}
+
+.board-panel--disabled .board-grid {
+  cursor: not-allowed;
+}
+
+.board-panel--disabled .board-cell {
+  cursor: not-allowed;
+  color: rgba(248, 250, 252, 0.45);
+  border-color: rgba(148, 163, 184, 0.4);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.7);
+  opacity: 0.82;
+}
+
 .board-panel h2 {
   margin: 0;
   font-size: 1.25rem;
@@ -150,7 +166,7 @@ body {
 }
 
 .board-cell:disabled {
-  cursor: default;
+  cursor: not-allowed;
   opacity: 0.9;
   box-shadow: inset 0 0 10px rgba(2, 6, 23, 0.85);
 }
@@ -169,7 +185,6 @@ body {
   font-weight: 600;
 }
 
-/* Control section styling */
 .status-area {
   display: flex;
   align-items: center;
@@ -188,7 +203,16 @@ body {
   font-size: 1rem;
 }
 
-/* Button base styling */
+.submission-text {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+  color: #a9c1d9;
+}
+
+.submission-text--error {
+  color: #f87171;
+}
+
 button {
   font: inherit;
   border: none;
@@ -219,7 +243,6 @@ button:active {
   transform: translateY(2px);
 }
 
-/* Specific new game button */
 .new-game {
   background: linear-gradient(135deg, #38bdf8, #22d3ee);
   color: #0f172a;

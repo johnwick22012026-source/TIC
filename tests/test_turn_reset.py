@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.models.game_result import GameOutcome, GameResult, GameMode
 from app.db.session import SessionLocal
+from app.schemas.game import Mode
 from app.services.turn import reset_game_state
 
 client = TestClient(app)
@@ -136,3 +137,25 @@ def test_play_turn_respects_versus_mode_by_skipping_computer_move() -> None:
     assert data["o_move"] == -1
     assert data["current_player"] == "O"
     assert data["status"] == GameOutcome.IN_PROGRESS.value
+
+
+def test_reset_game_state_respects_explicit_mode_selection() -> None:
+    result = reset_game_state(mode=Mode.VERSUS)
+
+    assert result.board == [""] * 9
+    assert result.status == GameOutcome.IN_PROGRESS
+    assert result.mode == GameMode.VERSUS
+    assert result.current_player == "X"
+    assert result.o_move == -1
+
+
+def test_reset_endpoint_clears_board_and_preserves_requested_mode() -> None:
+    response = client.post("/api/play/reset?mode=versus")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["board"] == [""] * 9
+    assert data["mode"] == GameMode.VERSUS.value
+    assert data["status"] == GameOutcome.IN_PROGRESS.value
+    assert data["current_player"] == "X"
+    assert data["o_move"] == -1

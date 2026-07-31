@@ -2,6 +2,8 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field, conlist
 
+from ..models.game_result import GameOutcome
+
 
 class TurnRequest(BaseModel):
     board: conlist(str, min_items=9, max_items=9) = Field(
@@ -18,3 +20,11 @@ class TurnResponse(BaseModel):
     o_move: int = Field(
         ..., description="Index (0-8) where computer played O, or -1 if no available cell."
     )
+    status: GameOutcome = Field(
+        ..., description="Current terminal status of the board after the turn."
+    )
+    winner: Optional[str] = Field(
+        None,
+        description="Winner identifier ('X', 'O', or 'draw'); null when the game is still in progress.",
+    )
+    is_terminal: bool = Field(..., description="True when the game has reached a win or draw state.")

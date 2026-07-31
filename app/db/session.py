@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
+from typing import Generator
 
 from .config import DATABASE_URL
 
@@ -20,3 +21,11 @@ SessionLocal = sessionmaker(
     bind=engine,
     future=True,
 )
+
+def get_db() -> Generator[Session, None, None]:
+    """Dependency for database sessions."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

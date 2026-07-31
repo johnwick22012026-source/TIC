@@ -8,14 +8,14 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from ..models.game_result import Winner
+from ..models.game_result import GameMode as PersistedGameMode, Winner
 
 
 class Mode(str, Enum):
     """Permitted game modes for starting a match."""
 
-    SINGLE = "1 vs Computer"
-    VERSUS = "1 vs 1"
+    SINGLE = "single"
+    VERSUS = "versus"
 
 
 class GameCreate(BaseModel):
@@ -31,7 +31,7 @@ class GameCreate(BaseModel):
     )
     mode: Mode = Field(
         Mode.SINGLE,
-        description="Mode of the match ('1 vs Computer' for single-player or '1 vs 1' for local multiplayer)",
+        description="Mode of the match ('single' for 1 vs Computer or 'versus' for local multiplayer)",
     )
 
 

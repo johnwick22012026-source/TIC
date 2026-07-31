@@ -96,6 +96,10 @@ body {
   opacity: 0.85;
 }
 
+.board-panel--won .board-cell:not(.board-cell--winning) {
+  opacity: 0.3;
+}
+
 .board-panel::after {
   content: "";
   position: absolute;
@@ -203,135 +207,4 @@ body {
   border: 1px solid var(--border-color);
   border-radius: 1rem;
   font-size: 1rem;
-}
-
-.status-text {
-  margin: 0;
-  color: var(--muted-color);
-}
-
-.submission-text {
-  margin: 0.35rem 0 0;
-  font-size: 0.9rem;
-  color: #a9c1d9;
-}
-
-.submission-text--error {
-  color: #f87171;
-}
-
-button:not(.board-cell) {
-  font: inherit;
-  border: none;
-  border-radius: 999px;
-  padding: 0.75rem 1.8rem;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
-  background-color: var(--accent-color);
-  color: var(--panel-color);
-  font-weight: 600;
-  font-size: 1rem;
-  letter-spacing: 0.02em;
-  box-shadow: 0 12px 24px rgba(56, 189, 248, 0.25);
-}
-
-button:not(.board-cell):hover:not(:disabled) {
-  filter: brightness(1.1);
-}
-
-button:not(.board-cell):focus-visible {
-  outline: 2px solid var(--accent-color);
-  outline-offset: 3px;
-}
-
-button:not(.board-cell):disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-button:not(.board-cell):active {
-  transform: translateY(2px);
-}
-
-.new-game {
-  background: linear-gradient(135deg, #38bdf8, #22d3ee);
-  color: #0f172a;
-  font-weight: 600;
-  box-shadow: 0 12px 24px rgba(56, 189, 248, 0.35);
-}
-
-.new-game:hover:not(:disabled) {
-  box-shadow: 0 16px 32px rgba(56, 189, 248, 0.45);
-}
-
-.scoreboard-panel {
-  background: var(--card-color);
-  padding: 1.5rem;
-  border-radius: 1.25rem;
-  border: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  box-shadow: 0 18px 30px rgba(2, 6, 23, 0.7);
-}
-
-.scoreboard-heading {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.scoreboard-heading h2 {
-  margin: 0;
-  font-size: 1.3rem;
-}
-
-.scoreboard-heading .subtitle {
-  font-size: 0.95rem;
-  color: var(--muted-color);
-}
-
-.score-grid {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-}
-
-.score-card {
-  background: rgba(15, 23, 42, 0.85);
-  padding: 1rem 1.25rem;
-  border-radius: 1rem;
-  border: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.score-label {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--muted-color);
-}
-
-.score-value {
-  margin: 0;
-  font-size: 1.8rem;
-  font-weight: 700;
-}
-
-@media (max-width: 720px) {
-  .game-shell {
-    gap: 1.5rem;
-  }
-
-  .status-area {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .new-game {
-    width: 100%;
-    text-align: center;
-  }
 }

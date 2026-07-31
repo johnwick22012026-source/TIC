@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 from ..models.game_result import GameMode as PersistedGameMode, Winner
 
@@ -29,21 +29,38 @@ class GameCreate(BaseModel):
     summary: Optional[str] = Field(
         None, description="Optional human-readable summary or notes about the game"
     )
-    mode: Optional[Mode] = Field(
-        None,
-        description="Mode of the match ('single' for 1 vs Computer or 'versus' for local multiplayer)."
+    mode: Mode = Field(
+        Mode.SINGLE,
+        description="Mode of the match ('single' for 1 vs Computer or 'versus' for local multiplayer)",
     )
+
+    @validator("mode", pre=True)
+    def normalize_mode_aliases(cls, value):
+        if value is None:
+            return Mode.SINGLE
+        if isinstance(value, Mode):
+            return value
+        mode_value = str(value).strip().lower()
+        if mode_value == "1 vs 1":
+            return Mode.VERSUS
+        try:
+            return Mode(mode_value)
+        except ValueError:
+            return value
 
 
 class GameResultResponse(BaseModel):
     id: UUID = Field(..., description="Identifier of the persisted game result")
     recorded_at: datetime = Field(..., description="Timestamp when the result was stored")
-    mode: Mode = Field(..., description="Mode that was active for the stored match")
 
 
 class ScoreSummary(BaseModel):
     winner: str = Field(..., description="Player identifier")
     wins: int = Field(..., description="Total wins for the player")
+
+
+class ScoreSummaryWithMode(ScoreSummary):
+    mode: Mode = Field(..., description="Mode of the match that produced the returned summary")
 
 
 class GamesSummary(BaseModel):

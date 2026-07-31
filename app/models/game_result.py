@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from sqlalchemy import Column, DateTime, Enum as SQLEnum, Index, String, Text, func
+from sqlalchemy import CheckConstraint, Column, DateTime, Enum as SQLEnum, Index, String, Text, func
 
 from ..db.base import Base
 
@@ -56,8 +56,6 @@ class GameResults(Base):
     status: GameOutcome = Column(
         SQLEnum(GameOutcome, name="game_outcome", native_enum=False),
         nullable=False,
-        default=GameOutcome.IN_PROGRESS,
-        server_default=GameOutcome.IN_PROGRESS.value,
         index=True,
     )
     mode: GameMode = Column(
@@ -94,6 +92,8 @@ class GameResults(Base):
         Index("idx_game_results_completed_at", "completed_at"),
         Index("idx_game_results_recorded_at", "recorded_at"),
         Index("idx_game_results_mode", "mode"),
+        CheckConstraint("mode IN ('single','versus')", name="ck_game_results_mode"),
+        CheckConstraint("status IN ('x_won','o_won','draw')", name="ck_game_results_outcome"),
     )
 
     def __repr__(self) -> str:  # pragma: no cover - representation helper

@@ -77,6 +77,8 @@ class GameResults(Base):
     __table_args__ = (
         Index("idx_game_results_status", "status"),
         Index("idx_game_results_winner", "winner"),
+        Index("idx_game_results_completed_at", "completed_at"),
+        Index("idx_game_results_recorded_at", "recorded_at"),
     )
 
     def __repr__(self) -> str:  # pragma: no cover - representation helper

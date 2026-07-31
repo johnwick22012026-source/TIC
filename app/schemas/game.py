@@ -46,7 +46,9 @@ class GameCreate(BaseModel):
         try:
             return Mode(mode_value)
         except ValueError:
-            return value
+            raise ValueError(
+                f"Unsupported mode '{value}'. Must be one of: {', '.join(sorted(item.value for item in Mode))}."
+            )
 
 
 class GameResultResponse(BaseModel):

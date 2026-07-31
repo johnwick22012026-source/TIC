@@ -1,32 +1,25 @@
 from datetime import datetime, timezone
 
-import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
 from app.db.session import SessionLocal
+from app.main import app
 from app.models.game_result import GameOutcome, GameResult
 from app.services.turn import reset_game_state
 
 client = TestClient(app)
 
 
-@pytest.fixture(autouse=True)
-def clean_game_results() -> None:
-    session = SessionLocal()
-    try:
-        session.query(GameResult).delete()
-        session.commit()
-        yield
-    finally:
-        session.close()
-
-
-def _add_game_result(session, winner: str, status: GameOutcome) -> GameResult:
+def _create_result(
+    session: SessionLocal,
+    winner: str,
+    status: GameOutcome,
+    board_snapshot: str = "[]",
+) -> GameResult:
     record = GameResult(
         winner=winner,
         status=status,
-        board_snapshot="[]",
+        board_snapshot=board_snapshot,
         completed_at=datetime.now(timezone.utc),
     )
     session.add(record)
@@ -59,29 +52,34 @@ def test_reset_endpoint_returns_clean_game_state() -> None:
     assert data.get("winning_cells", []) == []
 
 
-def test_reset_preserves_scoreboard_totals() -> None:
+def test_scoreboard_persists_after_reset() -> None:
     session = SessionLocal()
     try:
-        _add_game_result(session, winner="X", status=GameOutcome.X_WIN)
-        _add_game_result(session, winner="O", status=GameOutcome.O_WIN)
-        _add_game_result(session, winner="draw", status=GameOutcome.DRAW)
+        _create_result(session, winner="X", status=GameOutcome.X_WIN)
+        _create_result(session, winner="O", status=GameOutcome.O_WIN)
+        _create_result(session, winner="draw", status=GameOutcome.DRAW)
         session.commit()
     finally:
         session.close()
 
-    before = client.get("/api/games/scoreboard")
-    assert before.status_code == 200
-    assert before.json() == {"x_wins": 1, "o_wins": 1, "draws": 1}
+    expected_summary = {"player_wins": 1, "computer_wins": 1, "draws": 1}
+    expected_scoreboard = {"x_wins": 1, "o_wins": 1, "draws": 1}
 
-    reset_response = client.post("/api/play/reset")
-    assert reset_response.status_code == 200
+    summary_before = client.get("/api/games/summary")
+    assert summary_before.status_code == 200
+    assert summary_before.json() == expected_summary
 
-    after = client.get("/api/games/scoreboard")
-    assert after.status_code == 200
-    assert after.json() == before.json()
+    scoreboard_before = client.get("/api/games/scoreboard")
+    assert scoreboard_before.status_code == 200
+    assert scoreboard_before.json() == expected_scoreboard
 
-    session = SessionLocal()
-    try:
-        assert session.query(GameResult).count() == 3
-    finally:
-        session.close()
+    response = client.post("/api/play/reset")
+    assert response.status_code == 200
+
+    summary_after = client.get("/api/games/summary")
+    assert summary_after.status_code == 200
+    assert summary_after.json() == expected_summary
+
+    scoreboard_after = client.get("/api/games/scoreboard")
+    assert scoreboard_after.status_code == 200
+    assert scoreboard_after.json() == expected_scoreboard

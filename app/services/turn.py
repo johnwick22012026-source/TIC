@@ -1,14 +1,14 @@
-"""
-Turn resolution logic: after a valid player X move, select one random available cell for O.
-This module is deterministic when provided with a seeded random.Random instance, facilitating unit testing.
-"""
+"""Service layer for turn-based play logic and game resets."""
 import random
-from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
-from ..models.game_result import GameOutcome, GameMode
+from ..models.game_result import GameMode as PersistedGameMode, GameOutcome
+from ..schemas.game import Mode
+from .game import _game_mode_for_selection
 
-WIN_LINES: Tuple[Tuple[int, int, int], ...] = (
+
+# Winning lines for a 3 × 3 grid
+_WIN_LINES: List[tuple[int, int, int]] = [
     (0, 1, 2),
     (3, 4, 5),
     (6, 7, 8),
@@ -17,164 +17,154 @@ WIN_LINES: Tuple[Tuple[int, int, int], ...] = (
     (2, 5, 8),
     (0, 4, 8),
     (2, 4, 6),
-)
+]
 
 
-@dataclass(frozen=True)
-class TurnResolution:
-    board: List[str]
-    o_move: int
-    status: GameOutcome
-    winner: Optional[str]
-    is_terminal: bool
-    current_player: Optional[str]
-    winning_cells: Optional[Tuple[int, int, int]]
-    mode: GameMode
-
-
-def _evaluate_board(board: List[str]) -> GameOutcome:
-    for a, b, c in WIN_LINES:
-        value = board[a]
-        if value and value == board[b] == board[c]:
+def _evaluate_board(cells: List[str]) -> GameOutcome:
+    for a, b, c in _WIN_LINES:
+        value = cells[a]
+        if value and value == cells[b] and value == cells[c]:
             return GameOutcome.X_WIN if value == "X" else GameOutcome.O_WIN
-
-    if all(cell for cell in board):
+    if all(cells):
         return GameOutcome.DRAW
-
     return GameOutcome.IN_PROGRESS
 
 
-def _winner_from_status(status: GameOutcome) -> Optional[str]:
-    if status == GameOutcome.X_WIN:
-        return "X"
-    if status == GameOutcome.O_WIN:
-        return "O"
-    if status == GameOutcome.DRAW:
-        return "draw"
+def _find_winning_cells(cells: List[str]) -> Optional[List[int]]:
+    for a, b, c in _WIN_LINES:
+        value = cells[a]
+        if value and value == cells[b] and value == cells[c]:
+            return [a, b, c]
     return None
 
 
-def _winning_cells(board: List[str]) -> Optional[Tuple[int, int, int]]:
-    for line in WIN_LINES:
-        a, b, c = line
-        value = board[a]
-        if value and value == board[b] == board[c]:
-            return line
-    return None
-
-
-def _current_player_for_status(status: GameOutcome) -> Optional[str]:
-    return "X" if status == GameOutcome.IN_PROGRESS else None
-
-
-def resolve_turn(
-    board: List[str],
-    x_index: int,
-    mode: GameMode,
-    rand: Optional[random.Random] = None,
-) -> TurnResolution:
-    """
-    Apply the player's X move to the board at x_index, then pick a random empty cell for O in single-player mode.
-
-    Args:
-        board: A list of 9 strings representing the current board; empty string for empty cells.
-        x_index: The index (0-8) where X is to move.
-        mode: Selected match mode to determine whether the computer should play O.
-        rand: Optional random.Random instance for deterministic choice; if None, uses module random.
-
-    Returns:
-        A TurnResolution describing the new board state, the O move (if any), and terminal outcome.
-
-    Raises:
-        ValueError: If board length is not 9, x_index is out of range, the target cell is occupied,
-            or the provided board already represents a terminal game state.
-    """
+def _validate_board(board: List[str]) -> None:
     if len(board) != 9:
-        raise ValueError(f"Board must have exactly 9 cells; got {len(board)}")
-    if not (0 <= x_index < 9):
-        raise ValueError(f"X move index {x_index} out of range; must be 0-8")
+        raise ValueError("Board must contain 9 cells.")
+    for idx, cell in enumerate(board):
+        if cell not in ("", "X", "O"):
+            raise ValueError(f"Invalid value at board index {idx}: {cell}")
 
-    status_before = _evaluate_board(board)
-    if status_before != GameOutcome.IN_PROGRESS:
-        raise ValueError("The game is already complete; no further moves are allowed.")
 
-    if board[x_index]:
-        raise ValueError(f"Cell {x_index} is already occupied")
+def _validate_move(board: List[str], x_move: int) -> None:
+    if not isinstance(x_move, int):
+        raise ValueError("Move index must be an integer.")
+    if x_move < 0 or x_move >= len(board):
+        raise ValueError(f"Move index {x_move} out of bounds.")
+    if board[x_move]:
+        raise ValueError(f"Cell {x_move} is already occupied.")
 
-    rng = rand if rand is not None else random
 
-    new_board = board.copy()
-    new_board[x_index] = "X"
+class TurnState:
+    """Internal state representation for a single play/reset cycle."""
 
-    status_after_x = _evaluate_board(new_board)
-    winning_cells_after_x = _winning_cells(new_board)
-
-    if status_after_x != GameOutcome.IN_PROGRESS:
-        return TurnResolution(
-            board=new_board,
-            o_move=-1,
-            status=status_after_x,
-            winner=_winner_from_status(status_after_x),
-            is_terminal=True,
-            current_player=None,
-            winning_cells=winning_cells_after_x,
-            mode=mode,
+    def __init__(
+        self,
+        board: List[str],
+        status: GameOutcome,
+        current_player: str,
+        o_move: int,
+        winning_cells: Optional[List[int]] = None,
+        mode: PersistedGameMode = PersistedGameMode.SINGLE,
+    ):
+        self.board = board
+        self.status = status
+        self.winner = (
+            "X"
+            if status == GameOutcome.X_WIN
+            else "O"
+            if status == GameOutcome.O_WIN
+            else "draw"
+            if status == GameOutcome.DRAW
+            else None
         )
+        self.winning_cells = winning_cells
+        self.is_terminal = status != GameOutcome.IN_PROGRESS
+        self.current_player = current_player
+        self.o_move = o_move
+        self.mode = mode
 
-    if mode == GameMode.VERSUS:
-        return TurnResolution(
-            board=new_board,
-            o_move=-1,
-            status=status_after_x,
-            winner=None,
-            is_terminal=False,
-            current_player="O",
-            winning_cells=None,
-            mode=mode,
-        )
 
-    available = [i for i, value in enumerate(new_board) if not value]
-    if not available:
-        return TurnResolution(
-            board=new_board,
-            o_move=-1,
-            status=GameOutcome.DRAW,
-            winner=_winner_from_status(GameOutcome.DRAW),
-            is_terminal=True,
-            current_player=None,
-            winning_cells=None,
-            mode=mode,
-        )
-
-    o_index = rng.choice(available)
-    new_board[o_index] = "O"
-
-    status_after_o = _evaluate_board(new_board)
-    winning_cells_after_o = _winning_cells(new_board)
-    is_terminal = status_after_o != GameOutcome.IN_PROGRESS
-
-    return TurnResolution(
-        board=new_board,
-        o_move=o_index,
-        status=status_after_o,
-        winner=_winner_from_status(status_after_o),
-        is_terminal=is_terminal,
-        current_player=_current_player_for_status(status_after_o),
-        winning_cells=winning_cells_after_o,
-        mode=mode,
+def reset_game_state(mode: Optional[Mode] = None) -> TurnState:
+    """
+    Return a fresh board state for a new match in the selected mode.
+    """
+    game_mode = _game_mode_for_selection(mode)
+    return TurnState(
+        board=[""] * 9,
+        status=GameOutcome.IN_PROGRESS,
+        current_player="X",
+        o_move=-1,
+        mode=game_mode,
     )
 
 
-def reset_game_state(mode: GameMode = GameMode.SINGLE) -> TurnResolution:
-    """Return a fresh, empty board with transient game state reset to the starting player while leaving all persisted scoreboard data untouched."""
-    empty_board = [""] * 9
-    return TurnResolution(
-        board=empty_board,
+def play_turn(
+    board: List[str],
+    x_move: int,
+    mode: Optional[Mode] = None,
+    random_seed: Optional[int] = None,
+) -> TurnState:
+    """
+    Apply the X move and, if in single-player mode, a random O move.
+    """
+    _validate_board(board)
+    _validate_move(board, x_move)
+
+    game_mode = _game_mode_for_selection(mode)
+    # Player X move
+    board_after_x = list(board)
+    board_after_x[x_move] = "X"
+    status_after_x = _evaluate_board(board_after_x)
+    winning_after_x = (
+        _find_winning_cells(board_after_x)
+        if status_after_x != GameOutcome.IN_PROGRESS
+        else None
+    )
+
+    # Terminal after X
+    if status_after_x != GameOutcome.IN_PROGRESS:
+        return TurnState(
+            board=board_after_x,
+            status=status_after_x,
+            current_player="X",
+            o_move=-1,
+            winning_cells=winning_after_x,
+            mode=game_mode,
+        )
+
+    # Single-player: computer O move
+    if game_mode == PersistedGameMode.SINGLE:
+        if random_seed is not None:
+            random.seed(random_seed)
+        available = [i for i, v in enumerate(board_after_x) if not v]
+        if available:
+            o_index = random.choice(available)
+            board_after_x[o_index] = "O"
+            o_move = o_index
+        else:
+            o_move = -1
+        status_after_o = _evaluate_board(board_after_x)
+        winning_after_o = (
+            _find_winning_cells(board_after_x)
+            if status_after_o != GameOutcome.IN_PROGRESS
+            else None
+        )
+        return TurnState(
+            board=board_after_x,
+            status=status_after_o,
+            current_player="X",
+            o_move=o_move,
+            winning_cells=winning_after_o,
+            mode=game_mode,
+        )
+
+    # Versus mode: pass turn to O without computer move
+    return TurnState(
+        board=board_after_x,
+        status=status_after_x,
+        current_player="O",
         o_move=-1,
-        status=GameOutcome.IN_PROGRESS,
-        winner=None,
-        is_terminal=False,
-        current_player="X",
-        winning_cells=None,
-        mode=mode,
+        winning_cells=winning_after_x,
+        mode=game_mode,
     )

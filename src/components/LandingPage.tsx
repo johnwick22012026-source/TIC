@@ -6,6 +6,7 @@ import Scoreboard, { ScoreStat } from "./Scoreboard"
 const initialBoard = Array.from({ length: 9 }, () => "")
 
 type GameStatus = "in_progress" | "x_win" | "o_win" | "draw"
+type GameMode = "single" | "versus"
 
 const WIN_LINES: Array<[number, number, number]> = [
   [0, 1, 2],
@@ -16,6 +17,11 @@ const WIN_LINES: Array<[number, number, number]> = [
   [2, 5, 8],
   [0, 4, 8],
   [2, 4, 6],
+]
+
+const MODE_OPTIONS: Array<{ value: GameMode; label: string }> = [
+  { value: "single", label: "1 vs Computer" },
+  { value: "versus", label: "1 vs 1" },
 ]
 
 const evaluateBoard = (cells: string[]): GameStatus => {
@@ -57,6 +63,8 @@ export default function LandingPage() {
   const [busy, setBusy] = useState(false)
   const [gameStatus, setGameStatus] = useState<GameStatus>("in_progress")
   const [winningCells, setWinningCells] = useState<number[] | null>(null)
+  const [gameMode, setGameMode] = useState<GameMode>("single")
+  const [currentPlayer, setCurrentPlayer] = useState<"X" | "O">("X")
 
   const [scoreStats, setScoreStats] = useState<ScoreStat[]>([])
   const [scoreLoading, setScoreLoading] = useState(true)
@@ -104,6 +112,8 @@ export default function LandingPage() {
     setResultSubmissionStatus("idle")
     setResultSubmissionError(null)
     setLastSubmittedKey(null)
+    setBusy(false)
+    setCurrentPlayer("X")
   }
 
   const submitGameResult = useCallback(() => {
@@ -159,58 +169,70 @@ export default function LandingPage() {
   const handleCellClick = (index: number) => {
     if (busy || board[index] || gameStatus !== "in_progress") return
 
-    const boardAfterX = [...board]
-    boardAfterX[index] = "X"
-    setBoard(boardAfterX)
+    const isSinglePlayer = gameMode === "single"
+    const symbolToPlace = isSinglePlayer ? "X" : currentPlayer
+    const boardAfterMove = [...board]
+    boardAfterMove[index] = symbolToPlace
+    setBoard(boardAfterMove)
 
-    const statusAfterX = evaluateBoard(boardAfterX)
-    const winningAfterX =
-      statusAfterX === "x_win" || statusAfterX === "o_win"
-        ? findWinningCells(boardAfterX)
+    const statusAfterMove = evaluateBoard(boardAfterMove)
+    const winningAfterMove =
+      statusAfterMove === "x_win" || statusAfterMove === "o_win"
+        ? findWinningCells(boardAfterMove)
         : null
 
-    setGameStatus(statusAfterX)
-    setWinningCells(winningAfterX)
+    setGameStatus(statusAfterMove)
+    setWinningCells(winningAfterMove)
 
-    if (statusAfterX !== "in_progress") {
+    if (statusAfterMove !== "in_progress") {
+      if (!isSinglePlayer) {
+        setCurrentPlayer("X")
+      }
       setBusy(false)
       return
     }
 
-    setBusy(true)
-    setTimeout(() => {
-      const available = boardAfterX.reduce<number[]>((acc, val, idx) => (
-        !val ? [...acc, idx] : acc
-      ), [])
+    if (isSinglePlayer) {
+      setBusy(true)
+      setTimeout(() => {
+        const available = boardAfterMove.reduce<number[]>((acc, val, idx) => (
+          !val ? [...acc, idx] : acc
+        ), [])
 
-      if (available.length > 0) {
-        const oIndex = available[Math.floor(Math.random() * available.length)]
-        const boardAfterO = [...boardAfterX]
-        boardAfterO[oIndex] = "O"
-        setBoard(boardAfterO)
-        const statusAfterO = evaluateBoard(boardAfterO)
-        const winningAfterO =
-          statusAfterO === "x_win" || statusAfterO === "o_win"
-            ? findWinningCells(boardAfterO)
-            : null
+        if (available.length > 0) {
+          const oIndex = available[Math.floor(Math.random() * available.length)]
+          const boardAfterO = [...boardAfterMove]
+          boardAfterO[oIndex] = "O"
+          setBoard(boardAfterO)
+          const statusAfterO = evaluateBoard(boardAfterO)
+          const winningAfterO =
+            statusAfterO === "x_win" || statusAfterO === "o_win"
+              ? findWinningCells(boardAfterO)
+              : null
 
-        setGameStatus(statusAfterO)
-        setWinningCells(winningAfterO)
-      } else {
-        setGameStatus("draw")
-        setWinningCells(null)
-      }
+          setGameStatus(statusAfterO)
+          setWinningCells(winningAfterO)
+        } else {
+          setGameStatus("draw")
+          setWinningCells(null)
+        }
 
-      setBusy(false)
-    }, 500)
+        setBusy(false)
+      }, 500)
+      return
+    }
+
+    setCurrentPlayer((prev) => (prev === "X" ? "O" : "X"))
   }
 
   const handleNewGame = async () => {
     if (busy) return
     setBusy(true)
 
+    const modeQuery = gameMode === "versus" ? "?mode=versus" : ""
+
     try {
-      const response = await fetch("/api/play/reset", {
+      const response = await fetch(`/api/play/reset${modeQuery}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       })
@@ -248,8 +270,11 @@ export default function LandingPage() {
     if (gameStatus === "x_win") return "X won the round! Eyes on the highlighted line."
     if (gameStatus === "o_win") return "O won this heat! Check the glowing cells."
     if (gameStatus === "draw") return "Draw! The board filled without a winning line."
-    if (busy) return "Computer is thinking..."
-    return "Player X's turn · Computer ready"
+    if (gameMode === "single") {
+      if (busy) return "Computer is thinking..."
+      return "Player X's turn · Computer ready"
+    }
+    return `Player ${currentPlayer}'s turn · Alternate corners to win.`
   })()
 
   const submissionText = (() => {
@@ -267,6 +292,18 @@ export default function LandingPage() {
     ? "Error loading scoreboard totals"
     : "Persistent win/draw totals keep your progress visible."
 
+  const boardDescription =
+    gameMode === "single"
+      ? "Place your move and await the computer response."
+      : "Players trade turns placing X and O on the 3 × 3 grid."
+
+  const handleModeChange = (mode: GameMode) => {
+    if (mode === gameMode) return
+    setGameMode(mode)
+    setCurrentPlayer("X")
+    setBusy(false)
+  }
+
   return (
     <div className="page">
       <div className="game-shell">
@@ -280,11 +317,31 @@ export default function LandingPage() {
         </header>
 
         <div className="game-content">
+          <div className="match-mode-group">
+            <p className="match-mode-label">Match Mode</p>
+            <div className="mode-options" role="radiogroup" aria-label="Select match mode">
+              {MODE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={gameMode === option.value}
+                  className={`mode-option${
+                    gameMode === option.value ? " mode-option--active" : ""
+                  }`}
+                  onClick={() => handleModeChange(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="board-status-wrapper">
             <Board
               cells={board}
               heading="3 × 3 Battle Grid"
-              description="Place your move and await the computer response."
+              description={boardDescription}
               onCellClick={handleCellClick}
               disabled={busy || isTerminalGame}
               winningCells={winningCells ?? undefined}
@@ -312,10 +369,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <Scoreboard
-            stats={displayStats}
-            description={scoreboardDescription}
-          />
+          <Scoreboard stats={displayStats} description={scoreboardDescription} />
         </div>
       </div>
     </div>

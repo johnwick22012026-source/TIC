@@ -1,7 +1,7 @@
 """Router for turn resolution and reset endpoints."""
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status
 
 from ..schemas.turn import ResetResponse, TurnRequest, TurnResponse
 from ..schemas.game import Mode as SchemaMode
@@ -52,7 +52,7 @@ def play(
             current_player=state.current_player,
             o_move=state.o_move,
             is_terminal=state.is_terminal,
-            mode=request.mode,
+            mode=SchemaMode(state.mode.value),
         )
     except ValueError as exc:
         raise HTTPException(

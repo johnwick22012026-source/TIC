@@ -3,12 +3,57 @@ Turn resolution logic: after a valid player X move, select one random available 
 This module is deterministic when provided with a seeded random.Random instance, facilitating unit testing.
 """
 import random
+from dataclasses import dataclass
 from typing import List, Optional, Tuple
+
+from ..models.game_result import GameOutcome
+
+WIN_LINES: Tuple[Tuple[int, int, int], ...] = (
+    (0, 1, 2),
+    (3, 4, 5),
+    (6, 7, 8),
+    (0, 3, 6),
+    (1, 4, 7),
+    (2, 5, 8),
+    (0, 4, 8),
+    (2, 4, 6),
+)
+
+
+@dataclass(frozen=True)
+class TurnResolution:
+    board: List[str]
+    o_move: int
+    status: GameOutcome
+    winner: Optional[str]
+    is_terminal: bool
+
+
+def _evaluate_board(board: List[str]) -> GameOutcome:
+    for a, b, c in WIN_LINES:
+        value = board[a]
+        if value and value == board[b] == board[c]:
+            return GameOutcome.X_WIN if value == "X" else GameOutcome.O_WIN
+
+    if all(cell for cell in board):
+        return GameOutcome.DRAW
+
+    return GameOutcome.IN_PROGRESS
+
+
+def _winner_from_status(status: GameOutcome) -> Optional[str]:
+    if status == GameOutcome.X_WIN:
+        return "X"
+    if status == GameOutcome.O_WIN:
+        return "O"
+    if status == GameOutcome.DRAW:
+        return "draw"
+    return None
 
 
 def resolve_turn(
     board: List[str], x_index: int, rand: Optional[random.Random] = None
-) -> Tuple[List[str], int]:
+) -> TurnResolution:
     """
     Apply the player's X move to the board at x_index, then pick a random empty cell for O.
 
@@ -18,32 +63,59 @@ def resolve_turn(
         rand: Optional random.Random instance for deterministic choice; if None, uses module random.
 
     Returns:
-        A tuple (new_board, o_index) where new_board is the updated board list,
-        and o_index is the index where O moved, or -1 if no cells available.
+        A TurnResolution describing the new board state, the O move, and terminal outcome.
 
     Raises:
-        ValueError: If board length is not 9, x_index is out of range, or target cell is occupied.
+        ValueError: If board length is not 9, x_index is out of range, the target cell is occupied,
+            or the provided board already represents a terminal game state.
     """
     if len(board) != 9:
         raise ValueError(f"Board must have exactly 9 cells; got {len(board)}")
     if not (0 <= x_index < 9):
         raise ValueError(f"X move index {x_index} out of range; must be 0-8")
+
+    status_before = _evaluate_board(board)
+    if status_before != GameOutcome.IN_PROGRESS:
+        raise ValueError("The game is already complete; no further moves are allowed.")
+
     if board[x_index]:
         raise ValueError(f"Cell {x_index} is already occupied")
 
-    # Use provided Random instance or the global random
     rng = rand if rand is not None else random
 
-    # Copy board and apply X
     new_board = board.copy()
     new_board[x_index] = "X"
 
-    # Find available cells for O
-    available = [i for i, v in enumerate(new_board) if not v]
+    status_after_x = _evaluate_board(new_board)
+    if status_after_x != GameOutcome.IN_PROGRESS:
+        return TurnResolution(
+            board=new_board,
+            o_move=-1,
+            status=status_after_x,
+            winner=_winner_from_status(status_after_x),
+            is_terminal=True,
+        )
+
+    available = [i for i, value in enumerate(new_board) if not value]
     if not available:
-        # No space for O
-        return new_board, -1
+        return TurnResolution(
+            board=new_board,
+            o_move=-1,
+            status=GameOutcome.DRAW,
+            winner=_winner_from_status(GameOutcome.DRAW),
+            is_terminal=True,
+        )
 
     o_index = rng.choice(available)
     new_board[o_index] = "O"
-    return new_board, o_index
+
+    status_after_o = _evaluate_board(new_board)
+    is_terminal = status_after_o != GameOutcome.IN_PROGRESS
+
+    return TurnResolution(
+        board=new_board,
+        o_move=o_index,
+        status=status_after_o,
+        winner=_winner_from_status(status_after_o),
+        is_terminal=is_terminal,
+    )

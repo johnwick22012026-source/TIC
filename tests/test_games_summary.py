@@ -113,6 +113,9 @@ def test_game_creation_records_overridden_mode() -> None:
     response = client.post("/api/games/", json=payload)
     assert response.status_code == 201
 
+    data = response.json()
+    assert data["mode"] == "versus"
+
     session = SessionLocal()
     try:
         stmt = select(GameResult).order_by(GameResult.recorded_at.desc())
@@ -132,6 +135,9 @@ def test_game_creation_defaults_to_single_mode() -> None:
 
     response = client.post("/api/games/", json=payload)
     assert response.status_code == 201
+
+    data = response.json()
+    assert data["mode"] == "single"
 
     session = SessionLocal()
     try:

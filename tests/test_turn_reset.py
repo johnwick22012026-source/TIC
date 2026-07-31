@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime, timezone
 
 import pytest
@@ -11,11 +13,11 @@ from app.services.turn import reset_game_state
 client = TestClient(app)
 
 
-def _create_result(session, winner: str, status: GameOutcome, board_snapshot: str = "[]") -> GameResult:
+def _create_result(session: SessionLocal, winner: str, status: GameOutcome) -> GameResult:
     record = GameResult(
         winner=winner,
         status=status,
-        board_snapshot=board_snapshot,
+        board_snapshot="[]",
         completed_at=datetime.now(timezone.utc),
     )
     session.add(record)
@@ -57,24 +59,29 @@ def test_reset_endpoint_returns_clean_game_state() -> None:
     assert data["current_player"] == "X"
     assert data.get("winner") is None
     assert data.get("winning_cells", []) == []
+    assert data["scoreboard"] == {"x_wins": 0, "o_wins": 0, "draws": 0}
 
 
-def test_reset_does_not_clear_scoreboard_totals() -> None:
+def test_reset_endpoint_preserves_scoreboard_totals() -> None:
     session = SessionLocal()
     try:
         _create_result(session, winner="X", status=GameOutcome.X_WIN)
+        _create_result(session, winner="O", status=GameOutcome.O_WIN)
         _create_result(session, winner="draw", status=GameOutcome.DRAW)
         session.commit()
     finally:
         session.close()
 
-    reset_response = client.post("/api/play/reset")
-    assert reset_response.status_code == 200
+    scoreboard_before = client.get("/api/games/scoreboard")
+    assert scoreboard_before.status_code == 200
+    scoreboard_data = scoreboard_before.json()
 
-    scoreboard_response = client.get("/api/games/scoreboard")
-    assert scoreboard_response.status_code == 200
-    scoreboard = scoreboard_response.json()
+    response = client.post("/api/play/reset")
+    assert response.status_code == 200
 
-    assert scoreboard["x_wins"] == 1
-    assert scoreboard["o_wins"] == 0
-    assert scoreboard["draws"] == 1
+    data = response.json()
+    assert data["scoreboard"] == scoreboard_data
+
+    scoreboard_after = client.get("/api/games/scoreboard")
+    assert scoreboard_after.status_code == 200
+    assert scoreboard_after.json() == scoreboard_data

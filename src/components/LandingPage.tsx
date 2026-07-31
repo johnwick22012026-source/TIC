@@ -8,15 +8,6 @@ const initialBoard = Array.from({ length: 9 }, () => "")
 type GameStatus = "in_progress" | "x_win" | "o_win" | "draw"
 type GameMode = "single" | "versus"
 
-type ResetPayload = {
-  board: string[]
-  status: GameStatus
-  winning_cells?: number[]
-  current_player: "X" | "O"
-}
-
-type SubmissionStatus = "idle" | "pending" | "success" | "error"
-
 const WIN_LINES: Array<[number, number, number]> = [
   [0, 1, 2],
   [3, 4, 5],
@@ -59,6 +50,14 @@ const findWinningCells = (cells: string[]): number[] | null => {
   return null
 }
 
+type ResetPayload = {
+  board: string[]
+  status: GameStatus
+  winning_cells?: number[]
+}
+
+type SubmissionStatus = "idle" | "pending" | "success" | "error"
+
 export default function LandingPage() {
   const [board, setBoard] = useState<string[]>(initialBoard)
   const [busy, setBusy] = useState(false)
@@ -74,9 +73,7 @@ export default function LandingPage() {
   const [resultSubmissionStatus, setResultSubmissionStatus] = useState<SubmissionStatus>("idle")
   const [resultSubmissionError, setResultSubmissionError] = useState<string | null>(null)
   const lastSubmittedKeyRef = useRef<string | null>(null)
-
-  // Ref to track pending AI timeout so we can cancel it on mode change or new game
-  const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const computerMoveTimeoutRef = useRef<number | null>(null)
 
   const placeholderStats: ScoreStat[] = [
     { label: "X Wins", value: "—" },
@@ -109,19 +106,24 @@ export default function LandingPage() {
     fetchScores()
   }, [fetchScores])
 
+  // Clear any pending computer move when component unmounts
   useEffect(() => {
     return () => {
-      if (aiTimeoutRef.current) {
-        clearTimeout(aiTimeoutRef.current)
+      if (computerMoveTimeoutRef.current) {
+        clearTimeout(computerMoveTimeoutRef.current)
       }
     }
   }, [])
 
-  const applyResetState = ({ board, status, winning_cells, current_player }: ResetPayload) => {
-    if (aiTimeoutRef.current) {
-      clearTimeout(aiTimeoutRef.current)
-      aiTimeoutRef.current = null
+  // Clear pending computer move on mode change
+  useEffect(() => {
+    if (computerMoveTimeoutRef.current) {
+      clearTimeout(computerMoveTimeoutRef.current)
+      computerMoveTimeoutRef.current = null
     }
+  }, [gameMode])
+
+  const applyResetState = ({ board, status, winning_cells }: ResetPayload) => {
     setBoard(board)
     setGameStatus(status)
     setWinningCells(winning_cells && winning_cells.length > 0 ? winning_cells : null)
@@ -129,7 +131,7 @@ export default function LandingPage() {
     setResultSubmissionError(null)
     lastSubmittedKeyRef.current = null
     setBusy(false)
-    setCurrentPlayer(current_player)
+    setCurrentPlayer("X")
   }
 
   const submitGameResult = useCallback(() => {
@@ -210,9 +212,8 @@ export default function LandingPage() {
 
     if (isSinglePlayer) {
       setBusy(true)
-      // schedule AI move and track timeout so we can cancel if mode changes
-      aiTimeoutRef.current = setTimeout(() => {
-        aiTimeoutRef.current = null
+      // Schedule computer move and store timeout ID
+      computerMoveTimeoutRef.current = window.setTimeout(() => {
         const available = boardAfterMove.reduce<number[]>((acc, val, idx) => (
           !val ? [...acc, idx] : acc
         ), [])
@@ -236,6 +237,7 @@ export default function LandingPage() {
         }
 
         setBusy(false)
+        computerMoveTimeoutRef.current = null
       }, 500)
       return
     }
@@ -245,23 +247,12 @@ export default function LandingPage() {
 
   const handleNewGame = async () => {
     if (busy) return
-    if (aiTimeoutRef.current) {
-      clearTimeout(aiTimeoutRef.current)
-      aiTimeoutRef.current = null
-    }
     setBusy(true)
-    setBoard(Array.from({ length: 9 }, () => ""))
-    setGameStatus("in_progress")
-    setWinningCells(null)
-    setCurrentPlayer("X")
-    setResultSubmissionStatus("idle")
-    setResultSubmissionError(null)
-    lastSubmittedKeyRef.current = null
 
-    const modeQuery = `?mode=${gameMode}`
+    const params = new URLSearchParams({ mode: gameMode })
 
     try {
-      const response = await fetch(`/api/play/reset${modeQuery}`, {
+      const response = await fetch(`/api/play/reset?${params.toString()}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       })
@@ -274,14 +265,12 @@ export default function LandingPage() {
         board: string[]
         status: GameStatus
         winning_cells?: number[]
-        current_player: "X" | "O"
       }
 
       applyResetState({
         board: data.board,
         status: data.status,
         winning_cells: data.winning_cells,
-        current_player: data.current_player,
       })
     } catch (error) {
       console.error("Reset request failed:", error)
@@ -289,21 +278,10 @@ export default function LandingPage() {
         board: Array.from({ length: 9 }, () => ""),
         status: "in_progress",
         winning_cells: null,
-        current_player: "X",
       })
+    } finally {
+      setBusy(false)
     }
-  }
-
-  const handleModeChange = (mode: GameMode) => {
-    if (mode === gameMode) return
-    // cancel any pending AI move before changing mode
-    if (aiTimeoutRef.current) {
-      clearTimeout(aiTimeoutRef.current)
-      aiTimeoutRef.current = null
-    }
-    setGameMode(mode)
-    setCurrentPlayer("X")
-    setBusy(false)
   }
 
   const isTerminalGame = gameStatus !== "in_progress"
@@ -338,6 +316,13 @@ export default function LandingPage() {
     gameMode === "single"
       ? "Place your move and await the computer response."
       : "Players trade turns placing X and O on the 3 × 3 grid."
+
+  const handleModeChange = (mode: GameMode) => {
+    if (mode === gameMode) return
+    setGameMode(mode)
+    setCurrentPlayer("X")
+    setBusy(false)
+  }
 
   return (
     <div className="page">

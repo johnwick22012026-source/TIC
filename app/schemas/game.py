@@ -2,12 +2,20 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import Enum
 from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 from ..models.game_result import Winner
+
+
+class Mode(str, Enum):
+    """Permitted game modes for starting a match."""
+
+    SINGLE = "1 vs Computer"
+    VERSUS = "1 vs 1"
 
 
 class GameCreate(BaseModel):
@@ -20,6 +28,10 @@ class GameCreate(BaseModel):
     )
     summary: Optional[str] = Field(
         None, description="Optional human-readable summary or notes about the game"
+    )
+    mode: Mode = Field(
+        Mode.SINGLE,
+        description="Mode of the match ('1 vs Computer' for single-player or '1 vs 1' for local multiplayer)",
     )
 
 

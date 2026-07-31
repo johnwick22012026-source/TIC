@@ -143,3 +143,17 @@ def resolve_turn(
         current_player=_current_player_for_status(status_after_o),
         winning_cells=winning_cells_after_o,
     )
+
+
+def reset_game_state() -> TurnResolution:
+    """Return a fresh, empty board with transient game state reset to the starting player."""
+    empty_board = [""] * 9
+    return TurnResolution(
+        board=empty_board,
+        o_move=-1,
+        status=GameOutcome.IN_PROGRESS,
+        winner=None,
+        is_terminal=False,
+        current_player="X",
+        winning_cells=None,
+    )

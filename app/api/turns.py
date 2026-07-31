@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, status
 import random
 
 from ..schemas.turn import TurnRequest, TurnResponse
-from ..services.turn import resolve_turn
+from ..services.turn import resolve_turn, reset_game_state
 
 router = APIRouter(prefix="/play", tags=["turns"])
 
@@ -24,6 +24,21 @@ def play_turn(request: TurnRequest) -> TurnResponse:
             detail=str(exc),
         )
 
+    return TurnResponse(
+        board=result.board,
+        o_move=result.o_move,
+        status=result.status,
+        winner=result.winner,
+        is_terminal=result.is_terminal,
+        current_player=result.current_player,
+        winning_cells=list(result.winning_cells) if result.winning_cells else [],
+    )
+
+
+@router.post("/reset", response_model=TurnResponse, response_model_exclude_none=True)
+def reset_game_response() -> TurnResponse:
+    """Return a fresh transient game state representing a new round starting with X."""
+    result = reset_game_state()
     return TurnResponse(
         board=result.board,
         o_move=result.o_move,

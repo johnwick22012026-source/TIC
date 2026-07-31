@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useRef } from "react"
 import "../styles/global.css"
 import Board from "./Board"
 import Scoreboard, { ScoreStat } from "./Scoreboard"
@@ -72,7 +72,7 @@ export default function LandingPage() {
 
   const [resultSubmissionStatus, setResultSubmissionStatus] = useState<SubmissionStatus>("idle")
   const [resultSubmissionError, setResultSubmissionError] = useState<string | null>(null)
-  const [lastSubmittedKey, setLastSubmittedKey] = useState<string | null>(null)
+  const lastSubmittedKeyRef = useRef<string | null>(null)
 
   const placeholderStats: ScoreStat[] = [
     { label: "X Wins", value: "—" },
@@ -111,7 +111,7 @@ export default function LandingPage() {
     setWinningCells(winning_cells && winning_cells.length > 0 ? winning_cells : null)
     setResultSubmissionStatus("idle")
     setResultSubmissionError(null)
-    setLastSubmittedKey(null)
+    lastSubmittedKeyRef.current = null
     setBusy(false)
     setCurrentPlayer("X")
   }
@@ -125,11 +125,11 @@ export default function LandingPage() {
       gameStatus === "x_win" ? "X" : gameStatus === "o_win" ? "O" : "draw"
     const key = `${winner}-${board.join("")}`
 
-    if (lastSubmittedKey === key) {
+    if (lastSubmittedKeyRef.current === key) {
       return
     }
 
-    setLastSubmittedKey(key)
+    lastSubmittedKeyRef.current = key
     setResultSubmissionStatus("pending")
     setResultSubmissionError(null)
 
@@ -137,6 +137,7 @@ export default function LandingPage() {
       winner,
       board_snapshot: JSON.stringify(board),
       completed_at: new Date().toISOString(),
+      mode: gameMode,
     }
 
     fetch("/api/games", {
@@ -158,9 +159,8 @@ export default function LandingPage() {
         console.error("Failed to submit game result:", err)
         setResultSubmissionError("Unable to persist this round. Try again shortly.")
         setResultSubmissionStatus("error")
-        setLastSubmittedKey(null)
       })
-  }, [board, fetchScores, gameStatus, lastSubmittedKey])
+  }, [board, fetchScores, gameMode, gameStatus])
 
   useEffect(() => {
     submitGameResult()

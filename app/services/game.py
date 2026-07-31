@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..models.game_result import GameOutcome, GameResult
-from ..schemas.game import GameCreate, ScoreSummary, GamesSummary
+from ..schemas.game import GameCreate, ScoreSummary, GamesSummary, ScoreboardSummary
 
 
 def _status_for_winner(winner: str) -> GameOutcome:
@@ -85,4 +85,14 @@ def get_games_summary(db: Session) -> GamesSummary:
         player_wins=int(x_wins),
         computer_wins=int(o_wins),
         draws=int(draws),
+    )
+
+
+def get_scoreboard_totals(db: Session) -> ScoreboardSummary:
+    """Return a stable scoreboard view with X, O, and draw totals based on finished games."""
+    games = get_games_summary(db)
+    return ScoreboardSummary(
+        x_wins=games.player_wins,
+        o_wins=games.computer_wins,
+        draws=games.draws,
     )

@@ -1,7 +1,7 @@
 """Service layer for creating and summarizing game results."""
 
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -14,6 +14,7 @@ _MODE_TO_GAME_MODE = {
     Mode.SINGLE: GameMode.SINGLE,
     Mode.VERSUS: GameMode.VERSUS,
 }
+_GAME_MODE_TO_MODE = {value: key for key, value in _MODE_TO_GAME_MODE.items()}
 
 
 def _status_for_winner(winner: str) -> GameOutcome:
@@ -33,9 +34,8 @@ def _status_for_winner(winner: str) -> GameOutcome:
 
 def _summary_for_winner(db: Session, winner: str) -> ScoreSummary:
     stmt = (
-        select(func.count(GameResult.id))
+        select(func.count(GameResult.id).label("wins"))
         .where(GameResult.winner == winner)
-        .label("wins")
     )
     wins = db.execute(stmt).scalar_one()
     return ScoreSummary(winner=winner, wins=int(wins))
@@ -47,7 +47,7 @@ def _game_mode_for_selection(mode: Optional[Mode]) -> GameMode:
     return _MODE_TO_GAME_MODE.get(mode, GameMode.SINGLE)
 
 
-def create_game_result(db: Session, game: GameCreate) -> ScoreSummary:
+def create_game_result(db: Session, game: GameCreate) -> Tuple[ScoreSummary, Mode]:
     """
     Persist a completed game result and return the updated scoreboard entry for the winner.
     Raises ValueError for invalid winner inputs.
@@ -69,7 +69,8 @@ def create_game_result(db: Session, game: GameCreate) -> ScoreSummary:
     db.commit()
     db.refresh(record)
 
-    return _summary_for_winner(db, game.winner)
+    stored_mode = _GAME_MODE_TO_MODE.get(record.mode, Mode.SINGLE)
+    return _summary_for_winner(db, game.winner), stored_mode
 
 
 def get_score_summary(db: Session) -> List[ScoreSummary]:
@@ -85,28 +86,30 @@ def get_score_summary(db: Session) -> List[ScoreSummary]:
     return [ScoreSummary(winner=row[0], wins=int(row[1])) for row in rows]
 
 
-def get_games_summary(db: Session) -> GamesSummary:
+def get_games_summary(db: Session, mode: Mode) -> GamesSummary:
     """
-    Query the database for total wins of player X, wins of computer O, and draws.
+    Query the database for total wins of player X, wins of computer O, and draws for a specific mode.
     Only finished games (status != IN_PROGRESS) are counted.
     """
     finished_filter = GameResult.status != GameOutcome.IN_PROGRESS
-    # Count human player (X) wins
+    mode_filter = GameResult.mode == _MODE_TO_GAME_MODE[mode]
+
     x_wins_stmt = select(func.count(GameResult.id)).where(
         GameResult.status == GameOutcome.X_WIN,
         finished_filter,
+        mode_filter,
     )
     x_wins = db.execute(x_wins_stmt).scalar_one()
-    # Count computer (O) wins
     o_wins_stmt = select(func.count(GameResult.id)).where(
         GameResult.status == GameOutcome.O_WIN,
         finished_filter,
+        mode_filter,
     )
     o_wins = db.execute(o_wins_stmt).scalar_one()
-    # Count draws
     draw_stmt = select(func.count(GameResult.id)).where(
         GameResult.status == GameOutcome.DRAW,
         finished_filter,
+        mode_filter,
     )
     draws = db.execute(draw_stmt).scalar_one()
 
@@ -114,14 +117,16 @@ def get_games_summary(db: Session) -> GamesSummary:
         player_wins=int(x_wins),
         computer_wins=int(o_wins),
         draws=int(draws),
+        mode=mode,
     )
 
 
-def get_scoreboard_totals(db: Session) -> ScoreboardSummary:
-    """Return a stable scoreboard view with X, O, and draw totals based on finished games."""
-    games = get_games_summary(db)
+def get_scoreboard_totals(db: Session, mode: Mode) -> ScoreboardSummary:
+    """Return a stable scoreboard view with X, O, and draw totals based on finished games for a given mode."""
+    games = get_games_summary(db, mode=mode)
     return ScoreboardSummary(
         x_wins=games.player_wins,
         o_wins=games.computer_wins,
         draws=games.draws,
+        mode=mode,
     )

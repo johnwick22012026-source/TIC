@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import List, Optional
 from pydantic import BaseModel, Field
 
-from ..models.game_result import GameOutcome
+from ..models.game_result import GameOutcome, GameMode
 from ..schemas.game import ScoreboardSummary
 
 
@@ -16,6 +16,10 @@ class TurnRequest(BaseModel):
         description="List of 9 cell values ('', 'X', or 'O') before the X move."
     )
     x_move: int = Field(..., ge=0, lt=9, description="Index (0-8) where player X wants to move.")
+    mode: GameMode = Field(
+        GameMode.SINGLE,
+        description="Current match mode ('single' for 1 vs Computer or 'versus' for local multiplayer).",
+    )
     random_seed: Optional[int] = Field(
         None, description="Optional seed for randomness to allow deterministic tests."
     )
@@ -45,4 +49,7 @@ class TurnResponse(BaseModel):
     scoreboard: ScoreboardSummary | None = Field(
         None,
         description="Persistent scoreboard totals retrieved when the board is reset.",
+    )
+    mode: GameMode = Field(
+        ..., description="Selected match mode for the current game state."
     )

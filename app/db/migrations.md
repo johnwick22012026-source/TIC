@@ -10,7 +10,8 @@
    - `app/db/init.py` should continue to be the lightweight bootstrap, but migrations should become the source of truth for breaking changes.
 
 3. **Persisting Game Results**
-   - Game results now store a UUID primary key `id`, a `status` (one of `in_progress`, `x_won`, `o_won`, `draw`), and a `recorded_at` timestamp alongside the existing `completed_at` field. The `winner` column records the winner identifier (`X`, `O`, or `draw`).
+   - Game results store a UUID `id`, a constrained `winner` column (`'X'`, `'O'`, or `'draw'`), and a `status` enum that mirrors the `GameOutcome` enum from the SQLAlchemy models. `board_snapshot`, `summary`, `completed_at`, and `recorded_at` keep the provenance needed to rebuild scoreboard totals and audit when a game finished versus when it was recorded.
+   - Indexes on `status`, `winner`, and `completed_at` keep aggregate queries affordable while the table grows.
    - Queries for completed games should filter on `status` values other than `in_progress`, and can use `completed_at` vs `recorded_at` depending on whether you care about the end of play or when the backend persisted the result.
 
 4. **Local Development Workflow**

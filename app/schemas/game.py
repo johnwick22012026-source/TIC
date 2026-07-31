@@ -2,17 +2,12 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
 from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-
-class Winner(str, Enum):
-    X = "X"
-    O = "O"
-    DRAW = "draw"
+from ..models.game_result import Winner
 
 
 class GameCreate(BaseModel):

@@ -8,7 +8,7 @@ from ..services.turn import resolve_turn
 router = APIRouter(prefix="/play", tags=["turns"])
 
 
-@router.post("", response_model=TurnResponse)
+@router.post("", response_model=TurnResponse, response_model_exclude_none=True)
 def play_turn(request: TurnRequest) -> TurnResponse:
     """
     Execute a player X move and a subsequent random computer O move.
@@ -30,4 +30,6 @@ def play_turn(request: TurnRequest) -> TurnResponse:
         status=result.status,
         winner=result.winner,
         is_terminal=result.is_terminal,
+        current_player=result.current_player,
+        winning_cells=list(result.winning_cells) if result.winning_cells else [],
     )

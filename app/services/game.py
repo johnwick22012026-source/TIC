@@ -1,7 +1,7 @@
 """Service layer for creating and summarizing game results."""
 
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -41,7 +41,9 @@ def _summary_for_winner(db: Session, winner: str) -> ScoreSummary:
     return ScoreSummary(winner=winner, wins=int(wins))
 
 
-def _game_mode_for_selection(mode: Mode) -> GameMode:
+def _game_mode_for_selection(mode: Optional[Mode]) -> GameMode:
+    if mode is None:
+        return GameMode.SINGLE
     return _MODE_TO_GAME_MODE.get(mode, GameMode.SINGLE)
 
 
@@ -88,14 +90,24 @@ def get_games_summary(db: Session) -> GamesSummary:
     Query the database for total wins of player X, wins of computer O, and draws.
     Only finished games (status != IN_PROGRESS) are counted.
     """
+    finished_filter = GameResult.status != GameOutcome.IN_PROGRESS
     # Count human player (X) wins
-    x_wins_stmt = select(func.count(GameResult.id)).where(GameResult.status == GameOutcome.X_WIN)
+    x_wins_stmt = select(func.count(GameResult.id)).where(
+        GameResult.status == GameOutcome.X_WIN,
+        finished_filter,
+    )
     x_wins = db.execute(x_wins_stmt).scalar_one()
     # Count computer (O) wins
-    o_wins_stmt = select(func.count(GameResult.id)).where(GameResult.status == GameOutcome.O_WIN)
+    o_wins_stmt = select(func.count(GameResult.id)).where(
+        GameResult.status == GameOutcome.O_WIN,
+        finished_filter,
+    )
     o_wins = db.execute(o_wins_stmt).scalar_one()
     # Count draws
-    draw_stmt = select(func.count(GameResult.id)).where(GameResult.status == GameOutcome.DRAW)
+    draw_stmt = select(func.count(GameResult.id)).where(
+        GameResult.status == GameOutcome.DRAW,
+        finished_filter,
+    )
     draws = db.execute(draw_stmt).scalar_one()
 
     return GamesSummary(

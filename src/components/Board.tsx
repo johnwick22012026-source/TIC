@@ -19,13 +19,14 @@ export default function Board({
 }: BoardProps) {
   const isInteractive = typeof onCellClick === "function" && !disabled
   const winningIndexSet = new Set(winningCells ?? [])
-  const panelClasses = ["board-panel", disabled ? "board-panel--disabled" : ""].filter(Boolean)
+
+  const panelClassName = ["board-panel", disabled ? "board-panel--disabled" : ""].join(" ").trim()
 
   return (
-    <section className={panelClasses.join(" ")} aria-label="Tic tac toe board" aria-disabled={disabled}>
+    <section className={panelClassName} aria-label="Tic tac toe board">
       {heading && <h2>{heading}</h2>}
       {description && <p className="board-description">{description}</p>}
-      <div className="board-grid" role="grid" aria-hidden={disabled}>
+      <div className="board-grid" role="grid" aria-disabled={disabled || undefined}>
         {cells.map((value, index) => {
           const isWinningCell = winningIndexSet.has(index)
           return (

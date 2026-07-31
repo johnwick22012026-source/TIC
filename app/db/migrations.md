@@ -11,10 +11,14 @@
 
 3. **Persisting Game Results**
    - Game results store a UUID `id`, a constrained `winner` column (`'X'`, `'O'`, or `'draw'`), and a `status` enum that mirrors the `GameOutcome` enum from the SQLAlchemy models. `board_snapshot`, `summary`, `completed_at`, and `recorded_at` keep the provenance needed to rebuild scoreboard totals and audit when a game finished versus when it was recorded.
-   - Indexes on `status`, `winner`, `completed_at`, and `recorded_at` keep aggregate queries affordable while the table grows.
+   - Indexes on `status`, `winner`, `mode`, `completed_at`, and `recorded_at` keep aggregate queries affordable while the table grows.
    - Queries for completed games should filter on `status` values other than `in_progress`, and can use `completed_at` vs `recorded_at` depending on whether you care about the end of play or when the backend persisted the result.
    - Since scoreboard totals are derived strictly from these persisted rows, resetting the active board or starting a new match never removes the historical rows that feed the scoreboard, ensuring continuity for players.
 
 4. **Local Development Workflow**
    - Keep the database file under version control only if the project explicitly needs example data; otherwise, include `app/data/` in `.gitignore` and recreate the file fresh.
    - Consider wrapping `init_db()` inside a CLI script or FastAPI startup event once the backend needs to serve stored results.
+
+5. **Migration History**
+   - `0001_create_game_results_table.sql`: creates the `game_results` table with `id`, `winner`, `status`, `board_snapshot`, `summary`, `completed_at`, and `recorded_at`, plus supporting indexes and constraints.
+   - `0002_add_mode_to_game_results_table.sql`: augments `game_results` with the `mode` column (restricted to `'single'` or `'versus'`), populates existing rows with the default `'single'`, and adds the associated index and constraint that lets the backend persist the selected match mode with each recorded outcome.

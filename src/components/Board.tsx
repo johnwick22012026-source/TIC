@@ -19,11 +19,10 @@ export default function Board({
 }: BoardProps) {
   const isInteractive = typeof onCellClick === "function" && !disabled
   const winningIndexSet = new Set(winningCells ?? [])
-  const panelClassName = ["board-panel", disabled ? "board-panel--disabled" : ""].join(" ").trim()
 
   return (
     <section
-      className={panelClassName}
+      className={`board-panel${disabled ? " board-panel--disabled" : ""}`}
       aria-label="Tic tac toe board"
       aria-disabled={disabled}
     >
@@ -32,26 +31,16 @@ export default function Board({
       <div className="board-grid" role="grid">
         {cells.map((value, index) => {
           const isWinningCell = winningIndexSet.has(index)
-          const cellClassNames = ["board-cell"]
-          if (value === "X") cellClassNames.push("board-cell--x")
-          if (value === "O") cellClassNames.push("board-cell--o")
-          if (isWinningCell) cellClassNames.push("board-cell--winning")
-
-          const symbolClassNames = ["board-symbol"]
-          if (value === "X") symbolClassNames.push("board-symbol--x")
-          if (value === "O") symbolClassNames.push("board-symbol--o")
-
           return (
             <button
               key={index}
               type="button"
-              className={cellClassNames.join(" ")}
-              data-value={value}
+              className={`board-cell${isWinningCell ? " board-cell--winning" : ""}`}
               onClick={() => onCellClick?.(index)}
               disabled={disabled || !isInteractive || Boolean(value)}
               aria-label={`Cell ${index + 1} ${value ? `holds ${value}` : "is empty"}`}
             >
-              <span className={symbolClassNames.join(" ")}>{value}</span>
+              <span className="board-symbol">{value}</span>
             </button>
           )
         })}

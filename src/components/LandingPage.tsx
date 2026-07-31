@@ -1,14 +1,9 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import "../styles/global.css"
 import Board from "./Board"
-import Scoreboard from "./Scoreboard"
+import Scoreboard, { ScoreStat } from "./Scoreboard"
 
 const initialBoard = Array.from({ length: 9 }, () => "")
-const scoreData = [
-  { label: "X Wins", value: 7 },
-  { label: "O Wins", value: 5 },
-  { label: "Draws", value: 3 },
-]
 
 type GameStatus = "in_progress" | "x_win" | "o_win" | "draw"
 
@@ -60,6 +55,41 @@ export default function LandingPage() {
   const [busy, setBusy] = useState(false)
   const [gameStatus, setGameStatus] = useState<GameStatus>("in_progress")
   const [winningCells, setWinningCells] = useState<number[] | null>(null)
+
+  const [scoreStats, setScoreStats] = useState<ScoreStat[]>([])
+  const [scoreLoading, setScoreLoading] = useState(true)
+  const [scoreError, setScoreError] = useState<string | null>(null)
+
+  // Placeholder stats for loading or error states
+  const placeholderStats: ScoreStat[] = [
+    { label: "X Wins", value: "—" },
+    { label: "O Wins", value: "—" },
+    { label: "Draws", value: "—" },
+  ]
+
+  useEffect(() => {
+    const fetchScores = async () => {
+      setScoreLoading(true)
+      setScoreError(null)
+      try {
+        const res = await fetch("/api/games/scoreboard")
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const data = await res.json()
+        const stats: ScoreStat[] = [
+          { label: "X Wins", value: data.x_wins },
+          { label: "O Wins", value: data.o_wins },
+          { label: "Draws", value: data.draws },
+        ]
+        setScoreStats(stats)
+      } catch (err) {
+        console.error("Failed to load scoreboard totals:", err)
+        setScoreError("Unable to load scoreboard")
+      } finally {
+        setScoreLoading(false)
+      }
+    }
+    fetchScores()
+  }, [])
 
   const applyResetState = ({ board, status, winning_cells }: ResetPayload) => {
     setBoard(board)
@@ -163,6 +193,13 @@ export default function LandingPage() {
     return "Player X's turn · Computer ready"
   })()
 
+  const displayStats = scoreLoading || scoreError ? placeholderStats : scoreStats
+  const scoreboardDescription = scoreLoading
+    ? "Loading scoreboard totals..."
+    : scoreError
+    ? "Error loading scoreboard totals"
+    : "Persistent win/draw totals keep your progress visible."
+
   return (
     <div className="page">
       <div className="game-shell">
@@ -194,8 +231,8 @@ export default function LandingPage() {
         </div>
 
         <Scoreboard
-          stats={scoreData}
-          description="Persistent win/draw totals keep your progress visible."
+          stats={displayStats}
+          description={scoreboardDescription}
         />
       </div>
     </div>

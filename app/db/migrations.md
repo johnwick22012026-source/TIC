@@ -21,4 +21,4 @@
 
 5. **Migration History**
    - `0001_create_game_results_table.sql`: creates the `game_results` table with `id`, `winner`, `status`, `board_snapshot`, `summary`, `completed_at`, and `recorded_at`, plus supporting indexes and constraints.
-   - `0002_add_mode_to_game_results_table.sql`: augments `game_results` with the `mode` column (restricted to `'single'` or `'versus'`), populates existing rows with the default `'single'`, and adds the associated index and constraint that lets the backend persist the selected match mode with each recorded outcome.
+   - `0002_add_mode_to_game_results_table.sql`: augments `game_results` with the `mode` column (restricted to `'single'` or `'versus'` to match the backend `Mode` enum), populates existing rows with the default `'single'`, and adds the associated index and constraint so each recorded outcome notes whether it was a 1 vs Computer or a local 1 vs 1 match.

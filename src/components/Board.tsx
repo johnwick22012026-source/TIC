@@ -19,10 +19,11 @@ export default function Board({
 }: BoardProps) {
   const isInteractive = typeof onCellClick === "function" && !disabled
   const winningIndexSet = new Set(winningCells ?? [])
+  const hasWin = Array.isArray(winningCells) && winningCells.length > 0
 
   return (
     <section
-      className={`board-panel${disabled ? " board-panel--disabled" : ""}`}
+      className={`board-panel${disabled ? " board-panel--disabled" : ""}${hasWin ? " board-panel--won" : ""}`}
       aria-label="Tic tac toe board"
       aria-disabled={disabled}
     >

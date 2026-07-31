@@ -3,20 +3,26 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.orm import Session
 
-from ..schemas.game import GameCreate, GamesSummary, ScoreSummary, ScoreboardSummary
+from ..schemas.game import (
+    GameCreate,
+    GamesSummary,
+    ScoreSummaryWithMode,
+    ScoreboardSummary,
+)
 from ..services.game import create_game_result, get_games_summary, get_scoreboard_totals
 from ..db.session import get_db
 
 router = APIRouter(prefix="/games", tags=["games"])
 
-@router.post("/", response_model=ScoreSummary, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ScoreSummaryWithMode, status_code=status.HTTP_201_CREATED)
 def post_game(
     game: GameCreate,
     db: Session = Depends(get_db),
-) -> ScoreSummary:
+) -> ScoreSummaryWithMode:
     """Persist a finished game result to the database."""
     try:
-        return create_game_result(db, game)
+        summary = create_game_result(db, game)
+        return ScoreSummaryWithMode(**summary.dict(), mode=game.mode)
     except NotImplementedError:
         raise HTTPException(
             status_code=status.HTTP_501_NOT_IMPLEMENTED,

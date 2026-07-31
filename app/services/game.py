@@ -6,34 +6,30 @@ from typing import List
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from ..models.game_result import GameOutcome, GameResult
-from ..schemas.game import GameCreate, ScoreSummary, GamesSummary, ScoreboardSummary
+from ..models.game_result import GameOutcome, GameResult, Winner
+from ..schemas.game import (
+    GameCreate,
+    GameResultResponse,
+    GamesSummary,
+    ScoreSummary,
+    ScoreboardSummary,
+)
 
 
-def _status_for_winner(winner: str) -> GameOutcome:
-    normalized = winner.strip().lower()
-    if normalized == "x":
-        return GameOutcome.X_WIN
-    if normalized == "o":
-        return GameOutcome.O_WIN
-    if normalized == "draw":
-        return GameOutcome.DRAW
-    return GameOutcome.IN_PROGRESS
+_WINNER_STATUS_MAP: dict[Winner, GameOutcome] = {
+    Winner.X: GameOutcome.X_WIN,
+    Winner.O: GameOutcome.O_WIN,
+    Winner.DRAW: GameOutcome.DRAW,
+}
 
 
-def _summary_for_winner(db: Session, winner: str) -> ScoreSummary:
-    stmt = (
-        select(func.count(GameResult.id))
-        .where(GameResult.winner == winner)
-        .label("wins")
-    )
-    wins = db.execute(stmt).scalar_one()
-    return ScoreSummary(winner=winner, wins=int(wins))
+def _status_for_winner(winner: Winner) -> GameOutcome:
+    return _WINNER_STATUS_MAP.get(winner, GameOutcome.IN_PROGRESS)
 
 
-def create_game_result(db: Session, game: GameCreate) -> ScoreSummary:
+def create_game_result(db: Session, game: GameCreate) -> GameResultResponse:
     """
-    Persist a completed game result and return the updated scoreboard entry for the winner.
+    Persist a completed game result and return the persisted record identifier.
     """
     completed_at = game.completed_at or datetime.now(timezone.utc)
     status = _status_for_winner(game.winner)
@@ -50,7 +46,7 @@ def create_game_result(db: Session, game: GameCreate) -> ScoreSummary:
     db.commit()
     db.refresh(record)
 
-    return _summary_for_winner(db, game.winner)
+    return GameResultResponse(id=record.id, recorded_at=record.recorded_at)
 
 
 def get_score_summary(db: Session) -> List[ScoreSummary]:

@@ -28,3 +28,11 @@ class TurnResponse(BaseModel):
         description="Winner identifier ('X', 'O', or 'draw'); null when the game is still in progress.",
     )
     is_terminal: bool = Field(..., description="True when the game has reached a win or draw state.")
+    current_player: Optional[str] = Field(
+        None,
+        description="Next player to move when the game is still in progress; omitted otherwise.",
+    )
+    winning_cells: List[int] = Field(
+        default_factory=list,
+        description="Indices of the winning three-cell line when a player wins; empty otherwise.",
+    )

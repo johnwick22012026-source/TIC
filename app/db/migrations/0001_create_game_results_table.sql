@@ -16,5 +16,6 @@ CREATE TABLE IF NOT EXISTS game_results (
 CREATE INDEX IF NOT EXISTS idx_game_results_status ON game_results (status);
 CREATE INDEX IF NOT EXISTS idx_game_results_winner ON game_results (winner);
 CREATE INDEX IF NOT EXISTS idx_game_results_completed_at ON game_results (completed_at);
+CREATE INDEX IF NOT EXISTS idx_game_results_recorded_at ON game_results (recorded_at);
 
 COMMIT;

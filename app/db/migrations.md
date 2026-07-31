@@ -11,8 +11,9 @@
 
 3. **Persisting Game Results**
    - Game results store a UUID `id`, a constrained `winner` column (`'X'`, `'O'`, or `'draw'`), and a `status` enum that mirrors the `GameOutcome` enum from the SQLAlchemy models. `board_snapshot`, `summary`, `completed_at`, and `recorded_at` keep the provenance needed to rebuild scoreboard totals and audit when a game finished versus when it was recorded.
-   - Indexes on `status`, `winner`, and `completed_at` keep aggregate queries affordable while the table grows.
+   - Indexes on `status`, `winner`, `completed_at`, and `recorded_at` keep aggregate queries affordable while the table grows.
    - Queries for completed games should filter on `status` values other than `in_progress`, and can use `completed_at` vs `recorded_at` depending on whether you care about the end of play or when the backend persisted the result.
+   - Since scoreboard totals are derived strictly from these persisted rows, resetting the active board or starting a new match never removes the historical rows that feed the scoreboard, ensuring continuity for players.
 
 4. **Local Development Workflow**
    - Keep the database file under version control only if the project explicitly needs example data; otherwise, include `app/data/` in `.gitignore` and recreate the file fresh.

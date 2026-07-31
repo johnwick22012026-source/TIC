@@ -49,11 +49,23 @@ const findWinningCells = (cells: string[]): number[] | null => {
   return null
 }
 
+type ResetPayload = {
+  board: string[]
+  status: GameStatus
+  winning_cells?: number[]
+}
+
 export default function LandingPage() {
   const [board, setBoard] = useState<string[]>(initialBoard)
   const [busy, setBusy] = useState(false)
   const [gameStatus, setGameStatus] = useState<GameStatus>("in_progress")
   const [winningCells, setWinningCells] = useState<number[] | null>(null)
+
+  const applyResetState = ({ board, status, winning_cells }: ResetPayload) => {
+    setBoard(board)
+    setGameStatus(status)
+    setWinningCells(winning_cells && winning_cells.length > 0 ? winning_cells : null)
+  }
 
   const handleCellClick = (index: number) => {
     if (busy || board[index] || gameStatus !== "in_progress") return
@@ -104,12 +116,41 @@ export default function LandingPage() {
     }, 500)
   }
 
-  const handleNewGame = () => {
+  const handleNewGame = async () => {
     if (busy) return
-    setBoard(Array.from({ length: 9 }, () => ""))
-    setGameStatus("in_progress")
-    setWinningCells(null)
-    setBusy(false)
+    setBusy(true)
+
+    try {
+      const response = await fetch("/api/play/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      })
+
+      if (!response.ok) {
+        throw new Error("Unable to reset game via backend")
+      }
+
+      const data = (await response.json()) as {
+        board: string[]
+        status: GameStatus
+        winning_cells?: number[]
+      }
+
+      applyResetState({
+        board: data.board,
+        status: data.status,
+        winning_cells: data.winning_cells,
+      })
+    } catch (error) {
+      console.error("Reset request failed:", error)
+      applyResetState({
+        board: Array.from({ length: 9 }, () => ""),
+        status: "in_progress",
+        winning_cells: null,
+      })
+    } finally {
+      setBusy(false)
+    }
   }
 
   const isTerminalGame = gameStatus !== "in_progress"

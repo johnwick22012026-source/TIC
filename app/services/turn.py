@@ -27,6 +27,8 @@ class TurnResolution:
     status: GameOutcome
     winner: Optional[str]
     is_terminal: bool
+    current_player: Optional[str]
+    winning_cells: Optional[Tuple[int, int, int]]
 
 
 def _evaluate_board(board: List[str]) -> GameOutcome:
@@ -49,6 +51,19 @@ def _winner_from_status(status: GameOutcome) -> Optional[str]:
     if status == GameOutcome.DRAW:
         return "draw"
     return None
+
+
+def _winning_cells(board: List[str]) -> Optional[Tuple[int, int, int]]:
+    for line in WIN_LINES:
+        a, b, c = line
+        value = board[a]
+        if value and value == board[b] == board[c]:
+            return line
+    return None
+
+
+def _current_player_for_status(status: GameOutcome) -> Optional[str]:
+    return "X" if status == GameOutcome.IN_PROGRESS else None
 
 
 def resolve_turn(
@@ -87,6 +102,8 @@ def resolve_turn(
     new_board[x_index] = "X"
 
     status_after_x = _evaluate_board(new_board)
+    winning_cells_after_x = _winning_cells(new_board)
+
     if status_after_x != GameOutcome.IN_PROGRESS:
         return TurnResolution(
             board=new_board,
@@ -94,6 +111,8 @@ def resolve_turn(
             status=status_after_x,
             winner=_winner_from_status(status_after_x),
             is_terminal=True,
+            current_player=None,
+            winning_cells=winning_cells_after_x,
         )
 
     available = [i for i, value in enumerate(new_board) if not value]
@@ -104,12 +123,15 @@ def resolve_turn(
             status=GameOutcome.DRAW,
             winner=_winner_from_status(GameOutcome.DRAW),
             is_terminal=True,
+            current_player=None,
+            winning_cells=None,
         )
 
     o_index = rng.choice(available)
     new_board[o_index] = "O"
 
     status_after_o = _evaluate_board(new_board)
+    winning_cells_after_o = _winning_cells(new_board)
     is_terminal = status_after_o != GameOutcome.IN_PROGRESS
 
     return TurnResolution(
@@ -118,4 +140,6 @@ def resolve_turn(
         status=status_after_o,
         winner=_winner_from_status(status_after_o),
         is_terminal=is_terminal,
+        current_player=_current_player_for_status(status_after_o),
+        winning_cells=winning_cells_after_o,
     )

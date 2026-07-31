@@ -15,8 +15,8 @@ from ..db.base import Base
 
 class GameOutcome(str, Enum):
     IN_PROGRESS = "in_progress"
-    X_WIN = "x_win"
-    O_WIN = "o_win"
+    X_WIN = "x_won"
+    O_WIN = "o_won"
     DRAW = "draw"
 
 

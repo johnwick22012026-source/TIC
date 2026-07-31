@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
 from app.db.session import SessionLocal
 from app.main import app
-from app.models.game_result import GameOutcome, GameResult
+from app.models.game_result import GameMode, GameOutcome, GameResult
 
 client = TestClient(app)
 
@@ -100,3 +101,44 @@ def test_scoreboard_reflects_persisted_game_totals() -> None:
     assert data["x_wins"] == 2
     assert data["o_wins"] == 1
     assert data["draws"] == 1
+
+
+def test_game_creation_records_overridden_mode() -> None:
+    payload = {
+        "winner": "X",
+        "board_snapshot": "[]",
+        "mode": "1 vs 1",
+    }
+
+    response = client.post("/api/games/", json=payload)
+    assert response.status_code == 201
+
+    session = SessionLocal()
+    try:
+        stmt = select(GameResult).order_by(GameResult.recorded_at.desc())
+        record = session.execute(stmt).scalar_one()
+        assert record.mode == GameMode.VERSUS
+        session.delete(record)
+        session.commit()
+    finally:
+        session.close()
+
+
+def test_game_creation_defaults_to_single_mode() -> None:
+    payload = {
+        "winner": "O",
+        "board_snapshot": "[]",
+    }
+
+    response = client.post("/api/games/", json=payload)
+    assert response.status_code == 201
+
+    session = SessionLocal()
+    try:
+        stmt = select(GameResult).order_by(GameResult.recorded_at.desc())
+        record = session.execute(stmt).scalar_one()
+        assert record.mode == GameMode.SINGLE
+        session.delete(record)
+        session.commit()
+    finally:
+        session.close()

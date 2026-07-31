@@ -42,3 +42,9 @@ class GamesSummary(BaseModel):
     player_wins: int = Field(..., description="Total number of games the human player (X) won")
     computer_wins: int = Field(..., description="Total number of games the computer (O) won")
     draws: int = Field(..., description="Total number of games that ended in a draw")
+
+
+class ScoreboardSummary(BaseModel):
+    x_wins: int = Field(..., description="Total number of wins for player X")
+    o_wins: int = Field(..., description="Total number of wins for player O")
+    draws: int = Field(..., description="Total number of games that ended in a draw")

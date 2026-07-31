@@ -3,6 +3,7 @@ export interface BoardProps {
   heading?: string
   description?: string
   onCellClick?: (index: number) => void
+  disabled?: boolean
 }
 
 const defaultCells = Array.from({ length: 9 }, () => "")
@@ -12,8 +13,9 @@ export default function Board({
   heading,
   description,
   onCellClick,
+  disabled = false,
 }: BoardProps) {
-  const isInteractive = typeof onCellClick === "function"
+  const isInteractive = typeof onCellClick === "function" && !disabled
 
   return (
     <section className="board-panel" aria-label="Tic tac toe board">
@@ -26,7 +28,7 @@ export default function Board({
             type="button"
             className="board-cell"
             onClick={() => onCellClick?.(index)}
-            disabled={!isInteractive}
+            disabled={disabled || !isInteractive || Boolean(value)}
             aria-label={`Cell ${index + 1} ${value ? `holds ${value}` : "is empty"}`}
           >
             <span className="board-symbol">{value}</span>

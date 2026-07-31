@@ -1,14 +1,14 @@
 """Router for turn-resolution endpoint: accepts a player X move and returns an O move."""
-from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException, status, BackgroundTasks
 import random
 import json
+from datetime import datetime, timezone
 
 from ..schemas.turn import TurnRequest, TurnResponse
 from ..services.turn import resolve_turn, reset_game_state
-from ..services.game import create_game_result, get_scoreboard_totals
+from ..services.game import create_game_result
 from ..schemas.game import GameCreate
-from ..db.session import SessionLocal, get_db
+from ..db.session import SessionLocal
 
 router = APIRouter(prefix="/play", tags=["turns"])
 
@@ -65,10 +65,9 @@ def play_turn(
 
 
 @router.post("/reset", response_model=TurnResponse, response_model_exclude_none=True)
-def reset_game_response(db: Session = Depends(get_db)) -> TurnResponse:
-    """Return a fresh transient game state representing a new round starting with X while preserving scoreboard totals."""
+def reset_game_response() -> TurnResponse:
+    """Return a fresh transient game state representing a new round starting with X without touching the accumulated scoreboard data."""
     result = reset_game_state()
-    scoreboard = get_scoreboard_totals(db)
     return TurnResponse(
         board=result.board,
         o_move=result.o_move,
@@ -77,5 +76,4 @@ def reset_game_response(db: Session = Depends(get_db)) -> TurnResponse:
         is_terminal=result.is_terminal,
         current_player=result.current_player,
         winning_cells=list(result.winning_cells) if result.winning_cells else [],
-        scoreboard=scoreboard,
     )

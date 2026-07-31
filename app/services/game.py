@@ -6,8 +6,8 @@ from typing import List
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from ..models.game_result import GameOutcome, GameResult
-from ..schemas.game import GameCreate, ScoreSummary, GamesSummary, ScoreboardSummary
+from ..models.game_result import GameOutcome, GameMode as PersistedGameMode, GameResult
+from ..schemas.game import GameCreate, Mode, ScoreSummary, GamesSummary, ScoreboardSummary
 
 
 def _status_for_winner(winner: str) -> GameOutcome:
@@ -22,13 +22,17 @@ def _status_for_winner(winner: str) -> GameOutcome:
 
 
 def _summary_for_winner(db: Session, winner: str) -> ScoreSummary:
+    # Label the aggregate expression rather than the Select object
     stmt = (
-        select(func.count(GameResult.id))
+        select(func.count(GameResult.id).label("wins"))
         .where(GameResult.winner == winner)
-        .label("wins")
     )
     wins = db.execute(stmt).scalar_one()
     return ScoreSummary(winner=winner, wins=int(wins))
+
+
+def _persisted_mode_from_schema(mode: Mode) -> PersistedGameMode:
+    return PersistedGameMode(mode.value)
 
 
 def create_game_result(db: Session, game: GameCreate) -> ScoreSummary:
@@ -41,6 +45,7 @@ def create_game_result(db: Session, game: GameCreate) -> ScoreSummary:
     record = GameResult(
         winner=game.winner,
         status=status,
+        mode=_persisted_mode_from_schema(game.mode),
         board_snapshot=game.board_snapshot,
         summary=game.summary,
         completed_at=completed_at,
@@ -71,13 +76,10 @@ def get_games_summary(db: Session) -> GamesSummary:
     Query the database for total wins of player X, wins of computer O, and draws.
     Only finished games (status != IN_PROGRESS) are counted.
     """
-    # Count human player (X) wins
     x_wins_stmt = select(func.count(GameResult.id)).where(GameResult.status == GameOutcome.X_WIN)
     x_wins = db.execute(x_wins_stmt).scalar_one()
-    # Count computer (O) wins
     o_wins_stmt = select(func.count(GameResult.id)).where(GameResult.status == GameOutcome.O_WIN)
     o_wins = db.execute(o_wins_stmt).scalar_one()
-    # Count draws
     draw_stmt = select(func.count(GameResult.id)).where(GameResult.status == GameOutcome.DRAW)
     draws = db.execute(draw_stmt).scalar_one()
 

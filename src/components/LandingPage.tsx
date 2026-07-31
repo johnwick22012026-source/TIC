@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import "../styles/global.css"
 import Board from "./Board"
 import Scoreboard, { ScoreStat } from "./Scoreboard"
@@ -50,6 +50,8 @@ type ResetPayload = {
   winning_cells?: number[]
 }
 
+type SubmissionStatus = "idle" | "pending" | "success" | "error"
+
 export default function LandingPage() {
   const [board, setBoard] = useState<string[]>(initialBoard)
   const [busy, setBusy] = useState(false)
@@ -60,42 +62,98 @@ export default function LandingPage() {
   const [scoreLoading, setScoreLoading] = useState(true)
   const [scoreError, setScoreError] = useState<string | null>(null)
 
-  // Placeholder stats for loading or error states
+  const [resultSubmissionStatus, setResultSubmissionStatus] = useState<SubmissionStatus>("idle")
+  const [resultSubmissionError, setResultSubmissionError] = useState<string | null>(null)
+  const [lastSubmittedKey, setLastSubmittedKey] = useState<string | null>(null)
+
   const placeholderStats: ScoreStat[] = [
     { label: "X Wins", value: "—" },
     { label: "O Wins", value: "—" },
     { label: "Draws", value: "—" },
   ]
 
-  useEffect(() => {
-    const fetchScores = async () => {
-      setScoreLoading(true)
-      setScoreError(null)
-      try {
-        const res = await fetch("/api/games/scoreboard")
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const data = await res.json()
-        const stats: ScoreStat[] = [
-          { label: "X Wins", value: data.x_wins },
-          { label: "O Wins", value: data.o_wins },
-          { label: "Draws", value: data.draws },
-        ]
-        setScoreStats(stats)
-      } catch (err) {
-        console.error("Failed to load scoreboard totals:", err)
-        setScoreError("Unable to load scoreboard")
-      } finally {
-        setScoreLoading(false)
-      }
+  const fetchScores = useCallback(async () => {
+    setScoreLoading(true)
+    setScoreError(null)
+    try {
+      const res = await fetch("/api/games/scoreboard")
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      const stats: ScoreStat[] = [
+        { label: "X Wins", value: data.x_wins },
+        { label: "O Wins", value: data.o_wins },
+        { label: "Draws", value: data.draws },
+      ]
+      setScoreStats(stats)
+    } catch (err) {
+      console.error("Failed to load scoreboard totals:", err)
+      setScoreError("Unable to load scoreboard")
+    } finally {
+      setScoreLoading(false)
     }
-    fetchScores()
   }, [])
+
+  useEffect(() => {
+    fetchScores()
+  }, [fetchScores])
 
   const applyResetState = ({ board, status, winning_cells }: ResetPayload) => {
     setBoard(board)
     setGameStatus(status)
     setWinningCells(winning_cells && winning_cells.length > 0 ? winning_cells : null)
+    setResultSubmissionStatus("idle")
+    setResultSubmissionError(null)
+    setLastSubmittedKey(null)
   }
+
+  const submitGameResult = useCallback(() => {
+    if (gameStatus === "in_progress") {
+      return
+    }
+
+    const winner =
+      gameStatus === "x_win" ? "X" : gameStatus === "o_win" ? "O" : "draw"
+    const key = `${winner}-${board.join("")}`
+
+    if (lastSubmittedKey === key) {
+      return
+    }
+
+    setLastSubmittedKey(key)
+    setResultSubmissionStatus("pending")
+    setResultSubmissionError(null)
+
+    const payload = {
+      winner,
+      board_snapshot: JSON.stringify(board),
+      completed_at: new Date().toISOString(),
+    }
+
+    fetch("/api/games", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`)
+        }
+        return res.json()
+      })
+      .then(() => {
+        setResultSubmissionStatus("success")
+        fetchScores()
+      })
+      .catch((err) => {
+        console.error("Failed to submit game result:", err)
+        setResultSubmissionError("Unable to persist this round. Try again shortly.")
+        setResultSubmissionStatus("error")
+      })
+  }, [board, fetchScores, gameStatus, lastSubmittedKey])
+
+  useEffect(() => {
+    submitGameResult()
+  }, [submitGameResult])
 
   const handleCellClick = (index: number) => {
     if (busy || board[index] || gameStatus !== "in_progress") return
@@ -193,6 +251,14 @@ export default function LandingPage() {
     return "Player X's turn · Computer ready"
   })()
 
+  const submissionText = (() => {
+    if (!isTerminalGame) return null
+    if (resultSubmissionStatus === "pending") return "Submitting result to the scoreboard..."
+    if (resultSubmissionStatus === "error") return resultSubmissionError
+    if (resultSubmissionStatus === "success") return "Result saved to persistent scoreboard."
+    return null
+  })()
+
   const displayStats = scoreLoading || scoreError ? placeholderStats : scoreStats
   const scoreboardDescription = scoreLoading
     ? "Loading scoreboard totals..."
@@ -222,9 +288,21 @@ export default function LandingPage() {
         />
 
         <div className="status-area">
-          <p className="status-text" aria-live="polite">
-            {statusText}
-          </p>
+          <div>
+            <p className="status-text" aria-live="polite">
+              {statusText}
+            </p>
+            {submissionText && (
+              <p
+                className={`submission-text$ {
+                  resultSubmissionStatus === "error" ? " submission-text--error" : ""
+                }`}
+                aria-live={resultSubmissionStatus === "error" ? "assertive" : "polite"}
+              >
+                {submissionText}
+              </p>
+            )}
+          </div>
           <button className="new-game" onClick={handleNewGame} disabled={busy}>
             New Game
           </button>

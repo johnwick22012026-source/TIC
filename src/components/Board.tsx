@@ -19,9 +19,14 @@ export default function Board({
 }: BoardProps) {
   const isInteractive = typeof onCellClick === "function" && !disabled
   const winningIndexSet = new Set(winningCells ?? [])
+  const panelClassName = ["board-panel", disabled ? "board-panel--disabled" : ""].join(" ").trim()
 
   return (
-    <section className="board-panel" aria-label="Tic tac toe board">
+    <section
+      className={panelClassName}
+      aria-label="Tic tac toe board"
+      aria-disabled={disabled}
+    >
       {heading && <h2>{heading}</h2>}
       {description && <p className="board-description">{description}</p>}
       <div className="board-grid" role="grid">

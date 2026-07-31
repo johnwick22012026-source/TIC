@@ -3,8 +3,8 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.orm import Session
 
-from ..schemas.game import GameCreate, GamesSummary, ScoreSummary
-from ..services.game import create_game_result, get_games_summary
+from ..schemas.game import GameCreate, GamesSummary, ScoreSummary, ScoreboardSummary
+from ..services.game import create_game_result, get_games_summary, get_scoreboard_totals
 from ..db.session import get_db
 
 router = APIRouter(prefix="/games", tags=["games"])
@@ -34,4 +34,17 @@ def summary(
         raise HTTPException(
             status_code=status.HTTP_501_NOT_IMPLEMENTED,
             detail="Endpoint not implemented yet",
+        )
+
+@router.get("/scoreboard", response_model=ScoreboardSummary)
+def scoreboard(
+    db: Session = Depends(get_db),
+) -> ScoreboardSummary:
+    """Return the current persistent scoreboard totals derived from stored games."""
+    try:
+        return get_scoreboard_totals(db)
+    except Exception as exc:  # pragma: no cover - just in case
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to read scoreboard totals",
         )

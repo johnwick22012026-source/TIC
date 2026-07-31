@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
 
+import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.db.session import SessionLocal
 from app.main import app
@@ -24,6 +25,21 @@ def _create_result(
     )
     session.add(record)
     return record
+
+
+@pytest.fixture(autouse=True)
+def clean_game_results_table() -> None:
+    session = SessionLocal()
+    try:
+        session.execute(delete(GameResult))
+        session.commit()
+    finally:
+        session.close()
+
+
+def _latest_result_mode(session: SessionLocal) -> GameMode:
+    stmt = select(GameResult).order_by(GameResult.recorded_at.desc())
+    return session.execute(stmt).scalar_one().mode
 
 
 def test_summary_returns_zero_totals_when_no_finished_games_exist() -> None:
@@ -118,10 +134,8 @@ def test_game_creation_records_overridden_mode() -> None:
 
     session = SessionLocal()
     try:
-        stmt = select(GameResult).order_by(GameResult.recorded_at.desc())
-        record = session.execute(stmt).scalar_one()
-        assert record.mode == GameMode.VERSUS
-        session.delete(record)
+        assert _latest_result_mode(session) == GameMode.VERSUS
+        session.delete(session.execute(select(GameResult).order_by(GameResult.recorded_at.desc())).scalar_one())
         session.commit()
     finally:
         session.close()
@@ -141,10 +155,54 @@ def test_game_creation_defaults_to_single_mode() -> None:
 
     session = SessionLocal()
     try:
+        assert _latest_result_mode(session) == GameMode.SINGLE
+        session.delete(session.execute(select(GameResult).order_by(GameResult.recorded_at.desc())).scalar_one())
+        session.commit()
+    finally:
+        session.close()
+
+
+def test_game_result_response_preserves_mode_value_across_summary() -> None:
+    payload = {
+        "winner": "X",
+        "board_snapshot": "[]",
+        "mode": "versus",
+    }
+
+    response = client.post("/api/games/", json=payload)
+    assert response.status_code == 201
+
+    result = response.json()
+    assert result["mode"] == "versus"
+
+    session = SessionLocal()
+    try:
         stmt = select(GameResult).order_by(GameResult.recorded_at.desc())
         record = session.execute(stmt).scalar_one()
-        assert record.mode == GameMode.SINGLE
-        session.delete(record)
-        session.commit()
+        assert record.mode == GameMode.VERSUS
+    finally:
+        session.close()
+
+
+def test_summary_endpoint_rebounds_mode_from_persisted_record() -> None:
+    payload = {
+        "winner": "O",
+        "board_snapshot": "[]",
+        "mode": "single",
+    }
+
+    post_response = client.post("/api/games/", json=payload)
+    assert post_response.status_code == 201
+    summary_response = client.get("/api/games/summary")
+    assert summary_response.status_code == 200
+
+    data = summary_response.json()
+    assert data["player_wins"] == 0
+    assert data["computer_wins"] == 1
+    assert data["draws"] == 0
+
+    session = SessionLocal()
+    try:
+        assert _latest_result_mode(session) == GameMode.SINGLE
     finally:
         session.close()

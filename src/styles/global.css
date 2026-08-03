@@ -15,7 +15,7 @@
   --accent-color: #4f46e5;
   --accent-shadow-color: rgba(79, 70, 229, 0.35);
   --muted-color: #6b7280;
-  --board-shell-color: #f3f4ff;
+  --board-shell-color: var(--panel-color);
   --board-cell-color: rgba(255, 255, 255, 0.95);
   --board-cell-border: rgba(148, 163, 184, 0.35);
   --x-mark-color: #ef4444;

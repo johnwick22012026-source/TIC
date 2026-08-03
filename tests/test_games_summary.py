@@ -269,3 +269,58 @@ def test_round_persistence_via_game_flow_exposes_save_contract_failure() -> None
 
     assert save_response.status_code == 400
     assert "summary" in save_response.json().get("detail", "")
+
+
+def _build_winning_round_payload() -> Dict[str, Any]:
+    reset_response = client.post("/api/play/reset")
+    assert reset_response.status_code == 200
+
+    turn_payloads = [
+        {"board": ["" for _ in range(9)], "x_move": 0, "mode": "single", "random_seed": 1},
+        {"board": ["X", "", "", "", "", "", "", "", ""], "x_move": 4, "mode": "single", "random_seed": 1},
+        {"board": ["X", "", "", "", "O", "", "", "", ""], "x_move": 1, "mode": "single", "random_seed": 1},
+        {"board": ["X", "X", "", "O", "O", "", "", "", ""], "x_move": 2, "mode": "single", "random_seed": 1},
+    ]
+
+    last_response = None
+    for payload in turn_payloads:
+        response = client.post("/api/play", json=payload)
+        assert response.status_code == 200
+        last_response = response
+
+    assert last_response is not None
+    return last_response.json()
+
+
+def test_round_completion_save_contract_accepts_expected_summary_payload() -> None:
+    completed_payload = _build_winning_round_payload()
+    assert "summary" not in completed_payload
+
+    completion_summary = {"winner": "X", "wins": 3}
+    completed_payload["summary"] = completion_summary
+
+    save_response = client.post("/api/games/", json=completed_payload)
+    assert save_response.status_code == 201
+
+    data = save_response.json()
+    assert data["winner"] == completion_summary["winner"]
+    assert data["wins"] == completion_summary["wins"]
+    assert data["mode"] == "single"
+    assert {"winner", "board_snapshot", "summary"}.issubset(completed_payload.keys())
+
+
+def test_round_completion_save_contract_requires_summary_field() -> None:
+    completed_payload = _build_winning_round_payload()
+    assert "summary" not in completed_payload
+
+    save_response = client.post("/api/games/", json=completed_payload)
+    assert save_response.status_code == 400
+    assert "summary" in save_response.json().get("detail", "")
+
+
+def test_round_completion_save_contract_rejects_missing_board_snapshot() -> None:
+    response = client.post("/api/games/", json={"winner": "X"})
+    assert response.status_code == 422
+
+    detail = response.json().get("detail", [])
+    assert any(error.get("loc", [])[-1] == "board_snapshot" for error in detail if isinstance(error, dict))

@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Any, Dict
 
 import pytest
 from fastapi.testclient import TestClient
@@ -40,6 +41,11 @@ def clean_game_results_table() -> None:
 def _latest_result_mode(session: SessionLocal) -> GameMode:
     stmt = select(GameResult).order_by(GameResult.recorded_at.desc())
     return session.execute(stmt).scalar_one().mode
+
+
+def _winning_payload_from_state(state: Dict[str, Any]) -> Dict[str, Any]:
+    allowed_keys = {"winner", "board_snapshot", "summary", "mode", "completed_at"}
+    return {key: state[key] for key in allowed_keys if key in state}
 
 
 def test_summary_returns_zero_totals_when_no_finished_games_exist() -> None:
@@ -256,20 +262,7 @@ def test_round_persistence_via_game_flow_exposes_save_contract_failure() -> None
         assert response.status_code == 200
 
     # Build the save payload from the last returned state (X has won on top row)
-    game_state_response = client.post(
-        "/api/play",
-        json={"board": ["X", "X", "X", "", "O", "", "", "", ""], "x_move": 6, "mode": "single", "random_seed": 1},
-    )
-    assert game_state_response.status_code == 200
-
-    completed_payload = {
-        "winner": "X",
-        "board_snapshot": "[\"X\", \"X\", \"X\", \"\", \"O\", \"\", \"\", \"\", \"\"]",
-        "summary": {
-            "winner": "X",
-            "wins": 5,
-        },
-    }
+    completed_payload = _winning_payload_from_state(response.json())
 
     # Attempt to persist via the real /api/games/ endpoint. The current contract rejects completed rounds without a summary status.
     save_response = client.post("/api/games/", json=completed_payload)

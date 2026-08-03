@@ -7,8 +7,8 @@ This document maps each major top-level layout component to the CSS classes and 
 ## Global Stylesheet (`:root` and base)
 
 - **Color scheme and variables** (src/styles/global.css, `:root`)
-  - `color-scheme: dark`
-  - Dark mode CSS custom properties:
+  - `color-scheme: light` (the token set still reflects a light-leaning palette even though the rendered page currently layers darker gradients on top)
+  - Light-mode CSS custom properties:
     - `--bg-color`, `--panel-color`, `--card-color`, `--border-color`, `--accent-color`, `--muted-color`,
       `--board-shell-color`, `--board-cell-color`, `--board-cell-border`, `--x-mark-color`, `--o-mark-color`
 - **Global page background** (src/styles/global.css, `html, body`)
@@ -60,4 +60,4 @@ This document maps each major top-level layout component to the CSS classes and 
 
 ---
 
-*No structural or behavioral changes have been made. This mapping will guide the upcoming light-theme pass without altering existing component layouts or logic.*
+*No structural or behavioral changes were introduced by the light-theme CSS updates. Post-implementation validation confirmed layout stability across breakpoints and surfaces. Refer to `src/styles/global-theme-audit.md` for detailed verification results. Follow-up Issue: #456 – Extract spacing tokens for gap properties (see replication notes in the global theme audit).*

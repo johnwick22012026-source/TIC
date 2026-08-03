@@ -81,7 +81,7 @@ import "../styles/global.css"
 
 **File:** `src/styles/global.css`
 
-- Contains the dark-theme `:root` tokens, base resets, layout, and component-scoped styles.
+- Contains the default light-theme `:root` tokens, base resets, layout, and component-scoped styles.
 - Paired with an existing audit in `global-theme-audit.md` for color token reference.
 
 ---
@@ -89,10 +89,10 @@ import "../styles/global.css"
 ## 6. Stylesheet Load Order Summary
 
 1. Vite processes `main.tsx` → `App.tsx` → `LandingPage.tsx`.
-2. Import of `../styles/global.css` in `LandingPage.tsx` triggers CSS injection at bundle initialization.
+2. The import of `../styles/global.css` in `LandingPage.tsx` triggers CSS injection early in the bundle initialization.
 3. React mounts `<App />` and renders components.
 
-> **Note:** order of execution ensures global.css is in place before any UI paint.
+> **Note:** With the current import graph, global.css is evaluated and inserted before React renders, so the stylesheet is effectively in place before the UI paints. If the entry path changes or additional imports are introduced earlier, this order would need to be reassessed.
 
 ---
 

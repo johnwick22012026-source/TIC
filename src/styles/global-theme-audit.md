@@ -167,7 +167,7 @@ Specific styles for the board container, grid, cells, and symbols. These remain 
 ## Notes & Next Steps
 
 - **Global tokens** (`:root`) are intentionally kept as the foundation for any future dark/light splits.
-- **Base selectors** and **app-level surfaces** currently draw from darker gradients and transparencies, so update them when a light mode is introduced while keeping structural rules intact.
+- **Base selectors** and **app-level surfaces** currently draw from darker gradients and transparencies, but the light-mode audit highlights which backgrounds (page, game-shell, status-area, scoreboard panels) shifted to token-driven wrappers; reuse those tokens when evolving wrappers for additional modes while keeping structural rules intact.
 - **Typography defaults** rely on `--muted-color` for secondary text; ensure this token gains sufficient contrast for future theme contexts.
 - **Component-scoped** selectors intentionally omit direct color values here; they should reference the tokens when implementing new themes.
 - Use this audit as the reference point when creating `dark-theme.css` or updating the shared tokens for any additional theme modes.

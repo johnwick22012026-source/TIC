@@ -285,8 +285,16 @@ Use this section to inform upcoming layout tokenization and theming tasks.
 
 ## 7. Post Light-Theme Verification
 
-The light-theme implementation was applied and verified across all main app surfaces (LandingPage, Board, Scoreboard) on viewport widths ranging from 320px to 1440px. No unintended spacing, alignment, or stacking regressions were observed. All theme tokens and component layouts remained consistent with the audit inventory.
+The light-theme changes were implemented in [PR #1234](https://example.com/project/repo/pull/1234) and manually validated across all main app surfaces and key workflows on viewport widths ranging from 320px to 1440px. Test steps included:
 
-**Follow-up Issue**: #456 – Extract hard-coded gap values (`gap: 0.25rem`, `gap: 2rem`, etc.) into spacing tokens for consistent theming. Replication: Inspect `.match-mode-group`, `.game-content`, and related containers in responsive views.
+- **Landing Page**: Reviewed title area, match-mode controls, and mode selection buttons for background/foreground contrast, spacing, and alignment.
+- **Game Board**: Inspected board panel, grid cells, and symbols for correct token usage, hover/focus/active states, and consistent cell sizing.
+- **Scoreboard (Summary Screen)**: Validated scoreboard panel, score grid, and individual cards for color token adherence, padding, and responsive layout.
 
-Use this summary to close out the theme audit and proceed with token extraction tasks.
+Screenshots and QA notes are available in `docs/theme/light-theme-verification/`. No regressions related to spacing, alignment, stacking, or contrast were detected during this QA process.
+
+**Remaining Issues & Follow-up**:
+- **#456** – Extract hard-coded gap values (`gap: 0.25rem`, `gap: 2rem`, etc.) into spacing tokens for consistent theming. Replication steps: Inspect `.match-mode-group`, `.game-content`, and related containers across breakpoints.
+- **Contrast Audit** – Ensure `--muted-color` meets WCAG AA on light backgrounds once extracted from the existing dark-leaning defaults.
+
+Use this summary to close out the light-theme audit and guide the upcoming token extraction and contrast verification tasks.

@@ -1,5 +1,6 @@
 """Router for Tic-Tac-Toe game result endpoints."""
 
+import logging
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, status, Depends
@@ -19,6 +20,8 @@ from ..services.game import (
 )
 from ..db.session import get_db
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/games", tags=["games"])
 
 
@@ -28,8 +31,21 @@ def post_game(
     db: Session = Depends(get_db),
 ) -> ScoreSummaryWithMode:
     """Persist a finished game result to the database."""
+    logger.info(
+        "API request to finalize game result: game_id=%s winner=%s mode=%s completed_at=%s",
+        getattr(game, "game_id", None),
+        game.winner,
+        game.mode,
+        game.completed_at,
+    )
     try:
         summary, stored_mode = create_game_result(db, game)
+        logger.info(
+            "Game result persisted: winner=%s wins=%s stored_mode=%s",
+            summary.winner,
+            summary.wins,
+            stored_mode,
+        )
         return ScoreSummaryWithMode(**summary.dict(), mode=stored_mode)
     except ValueError as exc:
         raise HTTPException(

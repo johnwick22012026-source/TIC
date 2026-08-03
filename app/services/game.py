@@ -1,5 +1,6 @@
 """Service layer for creating and summarizing game results."""
 
+import logging
 from datetime import datetime, timezone
 from typing import List, Optional, Tuple
 
@@ -16,6 +17,7 @@ _MODE_TO_GAME_MODE = {
 }
 _GAME_MODE_TO_MODE = {value: key for key, value in _MODE_TO_GAME_MODE.items()}
 
+logger = logging.getLogger(__name__)
 
 def _status_for_winner(winner: str) -> GameOutcome:
     """
@@ -55,6 +57,16 @@ def create_game_result(db: Session, game: GameCreate) -> Tuple[ScoreSummary, Mod
     completed_at = game.completed_at or datetime.now(timezone.utc)
     status = _status_for_winner(game.winner)
     mode = _game_mode_for_selection(game.mode)
+    game_id = getattr(game, "game_id", None)
+    logger.info(
+        "Finalizing round: game_id=%s winner=%s mode=%s status=%s completed_at=%s summary=%s",
+        game_id,
+        game.winner,
+        mode,
+        status,
+        completed_at,
+        game.summary,
+    )
 
     record = GameResult(
         winner=game.winner,
@@ -70,8 +82,15 @@ def create_game_result(db: Session, game: GameCreate) -> Tuple[ScoreSummary, Mod
     db.refresh(record)
 
     stored_mode = _GAME_MODE_TO_MODE.get(record.mode, Mode.SINGLE)
+    logger.info(
+        "Persisted game result: id=%s winner=%s status=%s mode=%s stored_mode=%s",
+        record.id,
+        record.winner,
+        record.status,
+        record.mode,
+        stored_mode,
+    )
     return _summary_for_winner(db, game.winner), stored_mode
-
 
 def get_score_summary(db: Session) -> List[ScoreSummary]:
     """

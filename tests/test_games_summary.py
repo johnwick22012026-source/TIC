@@ -211,7 +211,7 @@ def test_summary_endpoint_rebounds_mode_from_persisted_record() -> None:
 def test_win_round_completion_produces_observable_payload() -> None:
     payload = {
         "winner": "X",
-        "board_snapshot": "[\"X\", \"O\", \"X\"]",
+        "board_snapshot": "[\"X\", \"X\", \"X\", \"\", \"O\", \"\", \"\", \"\", \"\"]",
         "summary": {
             "winner": "X",
             "wins": 3,
@@ -236,3 +236,43 @@ def test_win_round_completion_produces_observable_payload() -> None:
         assert latest.summary == payload["summary"]
     finally:
         session.close()
+
+
+def test_round_persistence_via_game_flow_exposes_save_contract_failure() -> None:
+    # Reset a fresh game so we begin from an empty board
+    reset_response = client.post("/api/play/reset")
+    assert reset_response.status_code == 200
+
+    # Play a deterministic sequence of moves resulting in X winning across the top row.
+    turn_payloads = [
+        {"board": ["" ] * 9, "x_move": 0, "mode": "single", "random_seed": 1},
+        {"board": ["X", "", "", "", "", "", "", "", ""], "x_move": 4, "mode": "single", "random_seed": 1},
+        {"board": ["X", "", "", "", "O", "", "", "", ""], "x_move": 1, "mode": "single", "random_seed": 1},
+        {"board": ["X", "X", "", "O", "O", "", "", "", ""], "x_move": 2, "mode": "single", "random_seed": 1},
+    ]
+
+    for payload in turn_payloads:
+        response = client.post("/api/play", json=payload)
+        assert response.status_code == 200
+
+    # Build the save payload from the last returned state (X has won on top row)
+    game_state_response = client.post(
+        "/api/play",
+        json={"board": ["X", "X", "X", "", "O", "", "", "", ""], "x_move": 6, "mode": "single", "random_seed": 1},
+    )
+    assert game_state_response.status_code == 200
+
+    completed_payload = {
+        "winner": "X",
+        "board_snapshot": "[\"X\", \"X\", \"X\", \"\", \"O\", \"\", \"\", \"\", \"\"]",
+        "summary": {
+            "winner": "X",
+            "wins": 5,
+        },
+    }
+
+    # Attempt to persist via the real /api/games/ endpoint. The current contract rejects completed rounds without a summary status.
+    save_response = client.post("/api/games/", json=completed_payload)
+
+    assert save_response.status_code == 400
+    assert "summary" in save_response.json().get("detail", "")

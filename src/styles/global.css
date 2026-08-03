@@ -130,21 +130,21 @@ body {
 
 .eyebrow {
   letter-spacing: 0.35em;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   text-transform: uppercase;
-  color: var(--muted-color);
+  color: var(--accent-color);
   margin: 0;
 }
 
 .title-area h1 {
   margin: 0;
-  font-size: clamp(2.25rem, 4vw, 3.2rem);
+  font-size: clamp(2.75rem, 5vw, 4rem);
 }
 
 .subtitle {
   margin: 0;
-  color: var(--muted-color);
-  font-size: 0.95rem;
+  color: var(--text-color);
+  font-size: 1rem;
   line-height: 1.5;
 }
 
@@ -331,7 +331,7 @@ body {
   border-radius: 0.75rem;
   background: var(--card-color);
   color: var(--text-color);
-  font-size: 0.875rem;
+  font-size: 1rem;
   cursor: pointer;
   transition: background 0.2s ease, border-color 0.2s ease;
 }
@@ -368,12 +368,12 @@ body {
 
 /* New game button */
 .new-game {
-  padding: 0.75rem 1.25rem;
-  font-size: 1rem;
+  padding: 1rem 1.5rem;
+  font-size: 1.125rem;
   background: var(--accent-color);
   color: var(--panel-color);
   border: none;
-  border-radius: 0.75rem;
+  border-radius: 1rem;
   cursor: pointer;
   transition: background 0.2s ease;
 }

@@ -3,9 +3,15 @@
   font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
   --bg-color: #f4f6fb;
   --text-color: #111827;
-  --panel-color: #ffffff;
-  --card-color: #f8f9ff;
-  --border-color: #e2e6f4;
+  --surface-card-color: #ffffff;
+  --surface-border-color: rgba(15, 23, 42, 0.08);
+  --surface-shadow-deep: 0 30px 60px rgba(15, 23, 42, 0.12);
+  --surface-shadow-mid: 0 18px 40px rgba(15, 23, 42, 0.1);
+  --surface-shadow-soft: 0 4px 12px rgba(15, 23, 42, 0.06);
+  --surface-shadow-faint: 0 2px 6px rgba(15, 23, 42, 0.04);
+  --panel-color: var(--surface-card-color);
+  --card-color: var(--surface-card-color);
+  --border-color: var(--surface-border-color);
   --accent-color: #4f46e5;
   --accent-shadow-color: rgba(79, 70, 229, 0.35);
   --muted-color: #64748b;
@@ -106,7 +112,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.12);
+  box-shadow: var(--surface-shadow-deep);
 }
 
 .game-content {
@@ -151,7 +157,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--surface-shadow-mid);
   overflow: hidden;
 }
 
@@ -287,7 +293,7 @@ body {
   padding: 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: 0.75rem;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--surface-shadow-faint);
   text-align: center;
 }
 

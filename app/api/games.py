@@ -46,7 +46,7 @@ def post_game(
 @router.get("/summary", response_model=GamesSummary)
 def summary(
     db: Session = Depends(get_db),
-    mode: Optional[Mode] = Mode.SINGLE,
+    mode: Optional[Mode] = None,
 ) -> GamesSummary:
     """Retrieve aggregated scoreboard totals for player wins, computer wins, and draws."""
     try:
@@ -61,7 +61,7 @@ def summary(
 @router.get("/scoreboard", response_model=ScoreboardSummary)
 def scoreboard(
     db: Session = Depends(get_db),
-    mode: Optional[Mode] = Mode.SINGLE,
+    mode: Optional[Mode] = None,
 ) -> ScoreboardSummary:
     """Return the current persistent scoreboard totals derived from stored games."""
     try:

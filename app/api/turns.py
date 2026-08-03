@@ -20,12 +20,14 @@ def reset_play(
         return ResetResponse(
             board=state.board,
             status=state.status,
-            winning_cells=state.winning_cells,
+            winning_cells=state.winning_cells or [],
             current_player=state.current_player,
             o_move=state.o_move,
             is_terminal=state.is_terminal,
             mode=SchemaMode(state.mode.value),
         )
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

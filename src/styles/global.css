@@ -7,6 +7,7 @@
   --card-color: #f8f9ff;
   --border-color: #e2e6f4;
   --accent-color: #4f46e5;
+  --accent-shadow-color: rgba(79, 70, 229, 0.35);
   --muted-color: #64748b;
   --board-shell-color: #f3f4ff;
   --board-cell-color: rgba(255, 255, 255, 0.95);
@@ -215,7 +216,7 @@ body {
 
 .board-cell:hover:not(:disabled) {
   border-color: var(--accent-color);
-  box-shadow: 0 12px 28px var(--accent-color);
+  box-shadow: 0 12px 28px var(--accent-shadow-color);
   transform: translateY(-1px);
 }
 
@@ -259,6 +260,7 @@ body {
   padding: 1rem 1.5rem;
   border: 1px solid var(--border-color);
   border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
   font-size: 1rem;
 }
 
@@ -267,6 +269,7 @@ body {
   padding: 1rem;
   border: 1px solid var(--border-color);
   border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
 }
 
 .scoreboard-heading {
@@ -284,6 +287,7 @@ body {
   padding: 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: 0.75rem;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
   text-align: center;
 }
 

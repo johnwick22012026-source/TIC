@@ -13,6 +13,8 @@
   --board-cell-border: rgba(100, 116, 139, 0.35);
   --x-mark-color: #ef4444;
   --o-mark-color: #14b8a6;
+  --highlight-color: #fcd34d;
+  --highlight-color-transparent: rgba(252, 211, 77, 0.2);
 }
 
 * {
@@ -202,11 +204,11 @@ body {
 }
 
 .board-cell--winning {
-  border-color: #fcd34d;
+  border-color: var(--highlight-color);
   box-shadow:
     0 0 0 3px rgba(252, 211, 77, 0.45),
     inset 0 -6px 16px rgba(0, 0, 0, 0.05);
-  background: linear-gradient(145deg, rgba(252, 211, 77, 0.2), rgba(255, 255, 255, 0.96));
+  background: linear-gradient(145deg, var(--highlight-color-transparent), rgba(255, 255, 255, 0.96));
 }
 
 .board-cell:hover:not(:disabled) {

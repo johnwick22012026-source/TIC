@@ -299,7 +299,7 @@ body {
 
 .score-label {
   margin: 0;
-  color: var(--muted-color);
+  color: var(--text-color);
   font-size: 0.875rem;
 }
 
@@ -307,6 +307,7 @@ body {
   margin: 0.25rem 0 0;
   font-size: 1.25rem;
   font-weight: 700;
+  color: var(--accent-color);
 }
 
 /* Match mode controls */

@@ -1,20 +1,20 @@
 :root {
   color-scheme: light;
   font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --bg-color: #f8fafc;
-  --text-color: #0f172a;
+  --bg-color: #f4f6fb;
+  --text-color: #111827;
   --panel-color: #ffffff;
-  --card-color: #f1f5f9;
-  --border-color: #e2e8f0;
+  --card-color: #f8f9ff;
+  --border-color: #e2e6f4;
   --accent-color: #4f46e5;
-  --muted-color: #475569;
-  --board-shell-color: #ffffff;
-  --board-cell-color: rgba(255, 255, 255, 0.85);
-  --board-cell-border: rgba(71, 85, 105, 0.35);
+  --muted-color: #64748b;
+  --board-shell-color: #f3f4ff;
+  --board-cell-color: rgba(255, 255, 255, 0.95);
+  --board-cell-border: rgba(148, 163, 184, 0.35);
   --x-mark-color: #ef4444;
   --o-mark-color: #14b8a6;
-  --highlight-color: #fcd34d;
-  --highlight-color-transparent: rgba(252, 211, 77, 0.2);
+  --highlight-color: #fbbf24;
+  --highlight-color-transparent: rgba(251, 191, 36, 0.25);
 }
 
 * {
@@ -93,6 +93,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
+  background: radial-gradient(circle at top, rgba(79, 70, 229, 0.12), transparent 50%);
 }
 
 .game-shell {
@@ -104,7 +105,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  box-shadow: 0 25px 55px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.12);
 }
 
 .game-content {

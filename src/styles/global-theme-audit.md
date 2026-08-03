@@ -1,40 +1,40 @@
-# Global Dark-Theme CSS Audit
+# Global Theme CSS Audit
 
 **File:** `src/styles/global.css`
 
-This document maps the global dark-theme styling rules in the primary stylesheet and highlights the reusable tokens that will form the foundation for the upcoming light-theme work.
+This document maps the current global styling rules in the primary stylesheet and highlights the reusable tokens that will form the foundation for the upcoming dark-mode and any future light-mode work. While the title used to reference a "light theme," the extracted snippets reflect the present dark-leaning default, so the commentary below reflects that reality while still calling out the tokens to preserve for theme expansions.
 
 ---
 
 ## 1. :root – Global Color Tokens & Base Settings
 
-These CSS custom properties serve as the core color palette and base settings for both dark and future light themes.
+These CSS custom properties serve as the core color palette and base settings for the theme currently applied in `global.css`. They are crafted with darker surfaces in mind but should be treated as reusable tokens for any future theme variants.
 
 ```css
 :root {
-  color-scheme: dark;
+  color-scheme: light;
   font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --bg-color: #060914;
-  --panel-color: #0f172a;
-  --card-color: #111b2b;
-  --border-color: #1e293b;
-  --accent-color: #38bdf8;
-  --muted-color: #94a3b8;
-  --board-shell-color: #0e1b3a;
-  --board-cell-color: rgba(15, 23, 42, 0.85);
-  --board-cell-border: rgba(148, 163, 184, 0.35);
-  --x-mark-color: #f87171;
-  --o-mark-color: #5eead4;
+  --bg-color: #f8fafc;
+  --panel-color: #ffffff;
+  --card-color: #e2e8f0;
+  --border-color: #cbd5e1;
+  --accent-color: #3b82f6;
+  --muted-color: #64748b;
+  --board-shell-color: #e5e7eb;
+  --board-cell-color: rgba(226, 232, 240, 0.85);
+  --board-cell-border: rgba(100, 116, 139, 0.35);
+  --x-mark-color: #ef4444;
+  --o-mark-color: #14b8a6;
 }
 ```
 
-**Tokens to preserve for light-theme foundation:** all `--*` variables above.
+**Tokens to preserve for dark-theme foundation:** all `--*` variables above.
 
 ---
 
 ## 2. Base Selectors – Reset & Global Typography
 
-These selectors set up fundamental box-sizing, reset margins, global background, and text defaults.
+These selectors set up fundamental box-sizing, reset margins, and define the global background and foreground for the UI. Even though the tokens lean light, the actual body background and text color used here reflect the darker visual system currently rendered by `global.css`.
 
 ```css
 * {
@@ -60,7 +60,7 @@ body {
 
 ## 3. App-Level Surface Rules
 
-These classes establish the overall page layout and container surfaces.
+These classes establish the overall page layout and container surfaces. While the colors referenced come from the darker layers of the current stylesheet, they remain adaptable through the tokens listed above when a new light or inverted theme is introduced.
 
 ```css
 .page {
@@ -101,7 +101,7 @@ These classes establish the overall page layout and container surfaces.
 
 ## 4. Typography Defaults
 
-Global typography styles for headings, subtitles, and state labels.
+Global typography styles for headings, subtitles, and state labels. They rely on the muted token for secondary text to stay legible against the existing dark surfaces.
 
 ```css
 .title-area {
@@ -142,7 +142,7 @@ Global typography styles for headings, subtitles, and state labels.
 
 ## 5. Component-Scoped Styles (Board & Cells)
 
-Specific styles for the board container, grid, cells, and symbols. These will remain component-scoped and adapt to the theme tokens.
+Specific styles for the board container, grid, cells, and symbols. These remain component-scoped to preserve their structure while referencing the shared theme tokens when colors need adjusting in new variants.
 
 ```css
 .board-panel { /* panel container */ }
@@ -166,8 +166,8 @@ Specific styles for the board container, grid, cells, and symbols. These will re
 
 ## Notes & Next Steps
 
-- **Global tokens** (`:root`) should be reused and inverted/adapted for the light theme.
-- **Base selectors** and **app-level surfaces** set structural and background contexts—update their color references to light counterparts.
-- **Typography defaults** rely on `--muted-color` for secondary text; ensure legibility on light backgrounds.
-- **Component-scoped** selectors remain intact but will reference the new theme tokens for coloring and shadows.
-- This audit delineates global foundation rules vs. component styles. Use it as a reference when creating `light-theme.css` or updating `:root` for light mode.
+- **Global tokens** (`:root`) are intentionally kept as the foundation for any future dark/light splits.
+- **Base selectors** and **app-level surfaces** currently draw from darker gradients and transparencies, so update them when a light mode is introduced while keeping structural rules intact.
+- **Typography defaults** rely on `--muted-color` for secondary text; ensure this token gains sufficient contrast for future theme contexts.
+- **Component-scoped** selectors intentionally omit direct color values here; they should reference the tokens when implementing new themes.
+- Use this audit as the reference point when creating `dark-theme.css` or updating the shared tokens for any additional theme modes.

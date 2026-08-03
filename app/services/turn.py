@@ -1,4 +1,5 @@
 """Service layer for turn-based play logic and game resets."""
+import logging
 import random
 from typing import List, Optional
 
@@ -6,8 +7,10 @@ from ..models.game_result import GameMode as PersistedGameMode, GameOutcome
 from ..schemas.game import Mode
 from .game import _game_mode_for_selection
 
+logger = logging.getLogger(__name__)
 
-# Winning lines for a 3 × 3 grid
+
+# Winning lines for a 3 D7 3 grid
 _WIN_LINES: List[tuple[int, int, int]] = [
     (0, 1, 2),
     (3, 4, 5),
@@ -112,6 +115,12 @@ def play_turn(
     _validate_move(board, x_move)
 
     game_mode = _game_mode_for_selection(mode)
+    logger.debug(
+        "Starting winner detection for board=%s x_move=%s mode=%s",
+        board,
+        x_move,
+        game_mode,
+    )
     # Player X move
     board_after_x = list(board)
     board_after_x[x_move] = "X"
@@ -121,9 +130,31 @@ def play_turn(
         if status_after_x != GameOutcome.IN_PROGRESS
         else None
     )
+    logger.info(
+        "Winner detection after X move: status=%s winning_cells=%s mode=%s",
+        status_after_x,
+        winning_after_x,
+        game_mode,
+    )
 
     # Terminal after X
     if status_after_x != GameOutcome.IN_PROGRESS:
+        winner_label = (
+            "X"
+            if status_after_x == GameOutcome.X_WIN
+            else "O"
+            if status_after_x == GameOutcome.O_WIN
+            else "draw"
+            if status_after_x == GameOutcome.DRAW
+            else None
+        )
+        logger.info(
+            "Terminating turn after X move: status=%s winner=%s winning_cells=%s mode=%s",
+            status_after_x,
+            winner_label,
+            winning_after_x,
+            game_mode,
+        )
         return TurnState(
             board=board_after_x,
             status=status_after_x,
@@ -135,11 +166,10 @@ def play_turn(
 
     # Single-player: computer O move
     if game_mode == PersistedGameMode.SINGLE:
-        if random_seed is not None:
-            random.seed(random_seed)
+        rng = random.Random(random_seed)
         available = [i for i, v in enumerate(board_after_x) if not v]
         if available:
-            o_index = random.choice(available)
+            o_index = rng.choice(available)
             board_after_x[o_index] = "O"
             o_move = o_index
         else:
@@ -149,6 +179,23 @@ def play_turn(
             _find_winning_cells(board_after_x)
             if status_after_o != GameOutcome.IN_PROGRESS
             else None
+        )
+        winner_label = (
+            "X"
+            if status_after_o == GameOutcome.X_WIN
+            else "O"
+            if status_after_o == GameOutcome.O_WIN
+            else "draw"
+            if status_after_o == GameOutcome.DRAW
+            else None
+        )
+        logger.info(
+            "Terminating turn after O move: status=%s winner=%s winning_cells=%s mode=%s o_move=%s",
+            status_after_o,
+            winner_label,
+            winning_after_o,
+            game_mode,
+            o_move,
         )
         return TurnState(
             board=board_after_x,
@@ -160,6 +207,11 @@ def play_turn(
         )
 
     # Versus mode: pass turn to O without computer move
+    logger.debug(
+        "Continuing vs mode turn: board=%s next_player=O mode=%s",
+        board_after_x,
+        game_mode,
+    )
     return TurnState(
         board=board_after_x,
         status=status_after_x,

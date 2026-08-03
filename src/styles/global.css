@@ -143,7 +143,7 @@ body {
 
 .subtitle {
   margin: 0;
-  color: var(--text-color);
+  color: var(--muted-color);
   font-size: 1rem;
   line-height: 1.5;
 }
@@ -179,7 +179,7 @@ body {
 
 .board-description {
   margin: 0;
-  color: var(--text-color);
+  color: var(--muted-color);
   font-size: 0.95rem;
 }
 
@@ -305,7 +305,7 @@ body {
 
 .score-label {
   margin: 0;
-  color: var(--text-color);
+  color: var(--muted-color);
   font-size: 0.875rem;
 }
 
@@ -325,7 +325,7 @@ body {
 .match-mode-label {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--text-color);
+  color: var(--muted-color);
 }
 .mode-options {
   display: flex;

@@ -86,30 +86,35 @@ def get_score_summary(db: Session) -> List[ScoreSummary]:
     return [ScoreSummary(winner=row[0], wins=int(row[1])) for row in rows]
 
 
-def get_games_summary(db: Session, mode: Mode) -> GamesSummary:
+def get_games_summary(db: Session, mode: Optional[Mode] = None) -> GamesSummary:
     """
-    Query the database for total wins of player X, wins of computer O, and draws for a specific mode.
-    Only finished games (status != IN_PROGRESS) are counted.
+    Query the database for total wins of player X, wins of computer O, and draws.
+    If a mode is specified, only finished games for that mode are counted;
+    otherwise, games across all modes are aggregated.
+    Finished games are those with status != IN_PROGRESS.
     """
-    finished_filter = GameResult.status != GameOutcome.IN_PROGRESS
-    mode_filter = GameResult.mode == _MODE_TO_GAME_MODE[mode]
+    filters = [GameResult.status != GameOutcome.IN_PROGRESS]
+    response_mode = mode
+
+    if mode is not None:
+        resolved_mode = _MODE_TO_GAME_MODE.get(mode, GameMode.SINGLE)
+        filters.append(GameResult.mode == resolved_mode)
 
     x_wins_stmt = select(func.count(GameResult.id)).where(
         GameResult.status == GameOutcome.X_WIN,
-        finished_filter,
-        mode_filter,
+        *filters
     )
     x_wins = db.execute(x_wins_stmt).scalar_one()
+
     o_wins_stmt = select(func.count(GameResult.id)).where(
         GameResult.status == GameOutcome.O_WIN,
-        finished_filter,
-        mode_filter,
+        *filters
     )
     o_wins = db.execute(o_wins_stmt).scalar_one()
+
     draw_stmt = select(func.count(GameResult.id)).where(
         GameResult.status == GameOutcome.DRAW,
-        finished_filter,
-        mode_filter,
+        *filters
     )
     draws = db.execute(draw_stmt).scalar_one()
 
@@ -117,12 +122,12 @@ def get_games_summary(db: Session, mode: Mode) -> GamesSummary:
         player_wins=int(x_wins),
         computer_wins=int(o_wins),
         draws=int(draws),
-        mode=mode,
+        mode=response_mode,
     )
 
 
-def get_scoreboard_totals(db: Session, mode: Mode) -> ScoreboardSummary:
-    """Return a stable scoreboard view with X, O, and draw totals based on finished games for a given mode."""
+def get_scoreboard_totals(db: Session, mode: Optional[Mode] = None) -> ScoreboardSummary:
+    """Return a stable scoreboard view with X, O, and draw totals based on finished games for an optional mode."""
     games = get_games_summary(db, mode=mode)
     return ScoreboardSummary(
         x_wins=games.player_wins,

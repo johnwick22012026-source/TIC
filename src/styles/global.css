@@ -90,10 +90,10 @@ body {
 
 .board-panel {
   position: relative;
-  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 60%, #e2e8f0 100%);
+  background: var(--panel-color);
   padding: clamp(1.5rem, 2vw, 2rem);
   border-radius: 1.75rem;
-  border: 1px solid rgba(59, 130, 246, 0.35);
+  border: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -109,16 +109,7 @@ body {
   opacity: 0.3;
 }
 
-.board-panel::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 2px;
-  background: linear-gradient(120deg, rgba(59, 130, 246, 0.35), transparent 70%);
-  pointer-events: none;
-  mix-blend-mode: screen;
-}
+
 
 .board-panel h2 {
   margin: 0;
@@ -216,4 +207,41 @@ body {
   border: 1px solid var(--border-color);
   border-radius: 1rem;
   font-size: 1rem;
+}
+
+.scoreboard-panel {
+  background: var(--card-color);
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+}
+
+.scoreboard-heading {
+  margin-bottom: 1rem;
+}
+
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 1rem;
+}
+
+.score-card {
+  background: var(--panel-color);
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  text-align: center;
+}
+
+.score-label {
+  margin: 0;
+  color: var(--muted-color);
+  font-size: 0.875rem;
+}
+
+.score-value {
+  margin: 0.25rem 0 0;
+  font-size: 1.25rem;
+  font-weight: 700;
 }

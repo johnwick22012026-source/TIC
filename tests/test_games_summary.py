@@ -206,3 +206,33 @@ def test_summary_endpoint_rebounds_mode_from_persisted_record() -> None:
         assert _latest_result_mode(session) == GameMode.SINGLE
     finally:
         session.close()
+
+
+def test_win_round_completion_produces_observable_payload() -> None:
+    payload = {
+        "winner": "X",
+        "board_snapshot": "[\"X\", \"O\", \"X\"]",
+        "summary": {
+            "winner": "X",
+            "wins": 3,
+        },
+    }
+
+    response = client.post("/api/games/", json=payload)
+    assert response.status_code == 201
+
+    data = response.json()
+    # ScoreSummaryWithMode returns the summary for the winning player along with the persisted mode
+    assert data["winner"] == "X"
+    assert data["wins"] == 3
+    assert data["mode"] == "single"
+
+    session = SessionLocal()
+    try:
+        stmt = select(GameResult).order_by(GameResult.recorded_at.desc())
+        latest = session.execute(stmt).scalar_one()
+        assert latest.board_snapshot == payload["board_snapshot"]
+        assert latest.status == GameOutcome.X_WIN
+        assert latest.summary == payload["summary"]
+    finally:
+        session.close()

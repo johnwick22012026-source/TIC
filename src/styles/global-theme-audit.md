@@ -198,3 +198,10 @@ The following classes define common layout containers and panels across the land
 - Background references on layout containers already use tokens but ensure `--bg-color`, `--panel-color`, and `--card-color` maintain adequate contrast in light mode.
 
 Use this section to inform upcoming layout tokenization and theming tasks.
+
+## 7. Post Light-Theme Verification
+The light-theme implementation was applied and verified across all main app surfaces (LandingPage, Board, Scoreboard) on viewport widths ranging from 320px to 1440px. No unintended spacing, alignment, or stacking regressions were observed. All theme tokens and component layouts remained consistent with the audit inventory.
+
+**Follow-up Issue**: #456 – Extract hard-coded gap values (`gap: 0.25rem`, `gap: 2rem`, etc.) into spacing tokens for consistent theming. Replication: Inspect `.match-mode-group`, `.game-content`, and related containers in responsive views.
+
+Use this summary to close out the theme audit and proceed with token extraction tasks.

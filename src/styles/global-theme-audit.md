@@ -2,13 +2,13 @@
 
 **File:** `src/styles/global.css`
 
-This document maps the current global styling rules in the primary stylesheet and highlights the reusable tokens that will form the foundation for the upcoming dark-mode and any future light-mode work. While the title used to reference a "light theme," the extracted snippets reflect the present dark-leaning default, so the commentary below reflects that reality while still calling out the tokens to preserve for theme expansions.
+This document maps the current global styling rules in the primary stylesheet and highlights the reusable tokens that will form the foundation for the upcoming dark-mode and any future light-mode work. While the title used to reference a "light theme," the extracted snippets reflect the present **light-leaning default**, so the commentary below reflects that reality while still calling out the tokens to preserve for theme expansions.
 
 ---
 
 ## 1. :root – Global Color Tokens & Base Settings
 
-These CSS custom properties serve as the core color palette and base settings for the theme currently applied in `global.css`. They are crafted with darker surfaces in mind but should be treated as reusable tokens for any future theme variants.
+These CSS custom properties serve as the core color palette and base settings for the theme currently applied in `global.css`. They are crafted with lighter surfaces in mind but should be treated as reusable tokens for any future theme variants.
 
 ```css
 :root {
@@ -28,7 +28,7 @@ These CSS custom properties serve as the core color palette and base settings fo
 }
 ```
 
-**Tokens to preserve for dark-theme foundation:** all `--*` variables above.
+**Tokens to preserve for theme foundation:** all `--*` variables above.
 
 ---
 
@@ -171,3 +171,30 @@ Specific styles for the board container, grid, cells, and symbols. These remain 
 - **Typography defaults** rely on `--muted-color` for secondary text; ensure this token gains sufficient contrast for future theme contexts.
 - **Component-scoped** selectors intentionally omit direct color values here; they should reference the tokens when implementing new themes.
 - Use this audit as the reference point when creating `dark-theme.css` or updating the shared tokens for any additional theme modes.
+
+## 6. Layout Surface Inventory & Theme Gaps
+
+The following classes define common layout containers and panels across the landing page, board, and scoreboard surfaces. Review each for theme token coverage and potential spacing/positioning risks:
+
+| Selector                 | Purpose                                    | Theme Token Usage               | Spacing/Positioning Notes                          |
+|--------------------------|--------------------------------------------|---------------------------------|----------------------------------------------------|
+| `.page`                  | Root page flex container                   | background: var(--bg-color)     | padding: 1.5rem; ensures consistent page inset.    |
+| `.game-shell`            | Main app shell wrapper                     | background, border from tokens  | gap: 2rem; clamp padding handles responsive space. |
+| `.game-content`          | Container for match mode, board, scoreboard| N/A (layout only)               | gap: 2rem; verify wrap behavior on small viewports.|
+| `.title-area`            | Header title block                         | text color from --text-color    | gap: 0.25rem; check vertical rhythm.               |
+| `.match-mode-group`      | Match mode controls container              | background: var(--card-color)   | gap: 0.5rem; may need tokenized gap value.         |
+| `.mode-options`          | Match mode buttons row                     | N/A                             | gap: 0.75rem; ensure covers all breakpoints.       |
+| `.board-status-wrapper`  | Layout for board + status panel            | N/A                             | gap: 2rem; flex-wrap: wrap may shift ordering.     |
+| `.status-area`           | Status text + new game button              | background: var(--card-color)   | padding: 1rem 1.5rem; consistent card padding.     |
+| `.new-game`              | New game action button                     | background: var(--accent-color) | padding: 0.75rem 1.25rem; ensure tap target size.   |
+| `.scoreboard-panel`      | Scoreboard container                       | background: var(--card-color)   | padding: 1rem; check card group spacing.           |
+| `.score-grid`            | Score cards grid                           | N/A                             | gap: 1rem; grid auto-fill; watch min card width.   |
+| `.score-card`            | Individual score entry                     | background: var(--panel-color)  | padding: 0.75rem; verify consistent tokenized spacing. |
+
+**Gaps & Risks:**
+- Several layout gaps (`gap` properties) are hard-coded rather than tokenized; consider extracting these into spacing variables for consistent theming.
+- The `.game-content` and `.board-status-wrapper` flex containers rely on manual gap values that may diverge when light theme adjustments introduce new panel margins.
+- Responsive wrapping (`flex-wrap: wrap`) on status and mode containers may cause uneven spacing on narrow screens; test theme changes thoroughly.
+- Background references on layout containers already use tokens but ensure `--bg-color`, `--panel-color`, and `--card-color` maintain adequate contrast in light mode.
+
+Use this section to inform upcoming layout tokenization and theming tasks.

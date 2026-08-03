@@ -266,7 +266,7 @@ body {
   padding: 1rem 1.5rem;
   border: 1px solid var(--border-color);
   border-radius: 1rem;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--surface-shadow-soft);
   font-size: 1rem;
 }
 
@@ -275,7 +275,7 @@ body {
   padding: 1rem;
   border: 1px solid var(--border-color);
   border-radius: 1rem;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--surface-shadow-soft);
 }
 
 .scoreboard-heading {

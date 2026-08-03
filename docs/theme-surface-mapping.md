@@ -9,11 +9,12 @@ This document maps each major top-level layout component to the CSS classes and 
 - **Color scheme and variables** (src/styles/global.css, `:root`)
   - `color-scheme: light` (the token set still reflects a light-leaning palette even though the rendered page currently layers darker gradients on top)
   - Light-mode CSS custom properties:
-    - `--bg-color`, `--panel-color`, `--card-color`, `--border-color`, `--accent-color`, `--muted-color`,
-      `--board-shell-color`, `--board-cell-color`, `--board-cell-border`, `--x-mark-color`, `--o-mark-color`
+    - `--bg-color`, `--text-color`, `--panel-color`, `--card-color`, `--border-color`, `--accent-color`, `--muted-color`,
+      `--board-shell-color`, `--board-cell-color`, `--board-cell-border`, `--x-mark-color`, `--o-mark-color`,
+      `--highlight-color`, `--highlight-color-transparent`
 - **Global page background** (src/styles/global.css, `html, body`)
-  - `background: radial-gradient(circle at top, #14213d 0%, #060914 45%)`
-  - `color: #f8fafc`
+  - `background: var(--bg-color)`
+  - `color: var(--text-color)`
 
 ---
 
@@ -21,9 +22,10 @@ This document maps each major top-level layout component to the CSS classes and 
 
 - **`.page`** wrapper (src/styles/global.css)
   - Full-viewport flex container with centered content and padding
+  - `background: radial-gradient(circle at top, rgba(79, 70, 229, 0.12), transparent 50%)`
 - **`.game-shell`** panel (src/styles/global.css)
-  - `background: rgba(15, 23, 42, 0.95)`
-  - `border: 1px solid rgba(148, 163, 184, 0.25)`
+  - `background: var(--panel-color)`
+  - `border: 1px solid var(--border-color)`
   - `border-radius`, `padding`, `box-shadow`
 
 ---
@@ -31,10 +33,10 @@ This document maps each major top-level layout component to the CSS classes and 
 ## Board component surface (src/components/Board.tsx)
 
 - **`.board-panel`** section (src/styles/global.css)
-  - `background: linear-gradient(180deg, #1b2b47 0%, #0c1224 60%, #050812 100%)`
+  - `background: var(--panel-color)`
   - Panel border, border-radius, box-shadow, overflow styling
 - **`.board-grid`** wrapper (src/styles/global.css)
-  - Radial-gradient shell and inset border for the grid container
+  - `background: var(--board-shell-color)` with border and inset box-shadow
 - **`.board-cell`**, **`.board-cell--winning`** (src/styles/global.css)
   - Cell background, border, hover/active/focus states, winning highlight gradient
 - **`.board-symbol--x`**, **`.board-symbol--o`** (src/styles/global.css)
@@ -60,4 +62,4 @@ This document maps each major top-level layout component to the CSS classes and 
 
 ---
 
-*No structural or behavioral changes were introduced by the light-theme CSS updates. Post-implementation validation confirmed layout stability across breakpoints and surfaces. Refer to `src/styles/global-theme-audit.md` for detailed verification results. Follow-up Issue: #456 – Extract spacing tokens for gap properties (see replication notes in the global theme audit).*
+*No structural or behavioral changes were introduced by the light-theme CSS updates. Refer to `src/styles/global-theme-audit.md` for the detailed audit results and verification notes. Follow-up Issue: #456 – Extract spacing tokens for gap properties (see replication notes in the global theme audit).*

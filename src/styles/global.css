@@ -210,8 +210,8 @@ body {
 }
 
 .board-cell:hover:not(:disabled) {
-  border-color: rgba(99, 102, 241, 0.9);
-  box-shadow: 0 12px 28px rgba(99, 102, 241, 0.25);
+  border-color: var(--accent-color);
+  box-shadow: 0 12px 28px var(--accent-color);
   transform: translateY(-1px);
 }
 
@@ -364,7 +364,7 @@ body {
   transition: background 0.2s ease;
 }
 .new-game:hover:not(:disabled) {
-  background: rgba(99, 102, 241, 0.8);
+  background: var(--accent-color);
 }
 .new-game:disabled {
   opacity: 0.6;

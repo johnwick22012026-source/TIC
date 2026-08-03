@@ -1,16 +1,16 @@
 :root {
   color-scheme: light;
   font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --bg-color: #ffffff;
-  --text-color: #1f2937;
-  --panel-color: #f9fafb;
-  --card-color: #f3f4f6;
-  --border-color: #e5e7eb;
-  --accent-color: #6366f1;
-  --muted-color: #64748b;
-  --board-shell-color: #f1f5f9;
+  --bg-color: #f8fafc;
+  --text-color: #0f172a;
+  --panel-color: #ffffff;
+  --card-color: #f1f5f9;
+  --border-color: #e2e8f0;
+  --accent-color: #4f46e5;
+  --muted-color: #475569;
+  --board-shell-color: #ffffff;
   --board-cell-color: rgba(255, 255, 255, 0.85);
-  --board-cell-border: rgba(100, 116, 139, 0.35);
+  --board-cell-border: rgba(71, 85, 105, 0.35);
   --x-mark-color: #ef4444;
   --o-mark-color: #14b8a6;
   --highlight-color: #fcd34d;

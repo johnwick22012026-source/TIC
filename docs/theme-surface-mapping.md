@@ -1,6 +1,6 @@
 # Theme Surface Mapping
 
-This document maps each major top-level layout component to the CSS classes and global stylesheet rules that define its theme-dependent surface (background, border, text color).
+This document maps each major top-level layout component to the CSS classes and global stylesheet rules that define its theme-dependent surface (background, border, text color) and elevation (box-shadow) tokens.
 
 ---
 
@@ -8,10 +8,24 @@ This document maps each major top-level layout component to the CSS classes and 
 
 - **Color scheme and variables** (src/styles/global.css, `:root`)
   - `color-scheme: light` (the token set still reflects a light-leaning palette even though the rendered page currently layers darker gradients on top)
-  - Light-mode CSS custom properties:
-    - `--bg-color`, `--text-color`, `--panel-color`, `--card-color`, `--border-color`, `--accent-color`, `--muted-color`,
-      `--board-shell-color`, `--board-cell-color`, `--board-cell-border`, `--x-mark-color`, `--o-mark-color`,
-      `--highlight-color`, `--highlight-color-transparent`
+  - Light-mode CSS custom properties for surfaces and elevation (src/styles/global.css, `:root`):
+    - **Core background & text:**
+      - `--bg-color`, `--text-color`
+    - **Shared surface tokens:** use these for consistent card/panel styling:
+      - `--surface-card-color` (base surface background for cards and panels)
+      - `--surface-border-color` (shared border color)
+      - `--surface-shadow-faint` (subtle elevation for inline cards)
+      - `--surface-shadow-soft` (soft elevation for status and scoreboard panels)
+      - `--surface-shadow-mid` (mid elevation for board panels)
+      - `--surface-shadow-deep` (deep elevation for the game shell)
+    - **Alias tokens for backward compatibility:** (prefer surface-* tokens moving forward)
+      - `--panel-color` = `var(--surface-card-color)`
+      - `--card-color` = `var(--surface-card-color)`
+      - `--border-color` = `var(--surface-border-color)`
+    - **Additional palette variables:**
+      - `--accent-color`, `--accent-shadow-color`, `--muted-color`
+      - `--board-shell-color`, `--board-cell-color`, `--board-cell-border`
+      - `--x-mark-color`, `--o-mark-color`, `--highlight-color`, `--highlight-color-transparent`
 - **Global page background** (src/styles/global.css, `html, body`)
   - `background: var(--bg-color)`
   - `color: var(--text-color)`

@@ -34,7 +34,7 @@ These CSS custom properties serve as the core color palette and base settings fo
 
 ## 2. Base Selectors – Reset & Global Typography
 
-These selectors set up fundamental box-sizing, reset margins, and define the global background and foreground for the UI. Even though the tokens lean light, the actual body background and text color used here reflect the darker visual system currently rendered by `global.css`.
+These selectors set up fundamental box-sizing, reset margins, and define the global background and foreground for the UI using the theme tokens in `global.css`.
 
 ```css
 * {
@@ -45,8 +45,9 @@ html,
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at top, #14213d 0%, #060914 45%);
-  color: #f8fafc;
+  color-scheme: light;
+  background: var(--bg-color);
+  color: var(--text-color);
   font-size: 16px;
   line-height: 1.6;
 }
@@ -69,18 +70,19 @@ These classes establish the overall page layout and container surfaces. While th
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
+  background: radial-gradient(circle at top, rgba(79, 70, 229, 0.06), transparent 50%);
 }
 
 .game-shell {
   width: min(1100px, 100%);
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: var(--panel-color);
+  border: 1px solid var(--border-color);
   border-radius: 1.5rem;
   padding: clamp(2rem, 3vw, 3rem);
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  box-shadow: 0 25px 55px rgba(2, 6, 23, 0.85);
+  box-shadow: var(--surface-shadow-deep);
 }
 
 .status-area {
@@ -93,6 +95,7 @@ These classes establish the overall page layout and container surfaces. While th
   padding: 1rem 1.5rem;
   border: 1px solid var(--border-color);
   border-radius: 1rem;
+  box-shadow: var(--surface-shadow-soft);
   font-size: 1rem;
 }
 ```
@@ -142,24 +145,105 @@ Global typography styles for headings, subtitles, and state labels. They rely on
 
 ## 5. Component-Scoped Styles (Board & Cells)
 
-Specific styles for the board container, grid, cells, and symbols. These remain component-scoped to preserve their structure while referencing the shared theme tokens when colors need adjusting in new variants.
+These are the actual CSS definitions for the board container, grid, cells, and symbols as extracted from `global.css`. They showcase concrete usage of the shared theme tokens.
 
 ```css
-.board-panel { /* panel container */ }
-.board-panel--disabled { /* disabled state */ }
-.board-panel--won .board-cell:not(.board-cell--winning) { /* dim losing cells */ }
-.board-panel::after { /* overlay gradient */ }
-.board-description { /* panel description text */ }
-.board-grid { /* grid layout & bg */ }
-.board-cell { /* individual cell default */ }
-.board-cell--winning { /* winning cell highlight */ }
-.board-cell:hover:not(:disabled) { /* hover state */ }
-.board-cell:disabled { /* disabled cell */ }
-.board-cell:focus-visible { /* focus ring */ }
-.board-cell:active { /* active press */ }
-.board-symbol { /* symbol base */ }
-.board-symbol--x { /* X-mark color & glow */ }
-.board-symbol--o { /* O-mark color & glow */ }
+.board-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: var(--card-color);
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  box-shadow: var(--surface-shadow-soft);
+}
+
+.board-panel--disabled {
+  opacity: 0.5;
+}
+
+.board-panel--won .board-cell:not(.board-cell--winning) {
+  opacity: 0.2;
+}
+
+.board-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.5),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.board-description {
+  margin-top: 0.5rem;
+  color: var(--muted-color);
+  font-size: 0.95rem;
+}
+
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  background: var(--board-shell-color);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.board-cell {
+  width: 4rem;
+  height: 4rem;
+  background: var(--board-cell-color);
+  border: 1px solid var(--board-cell-border);
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.board-cell--winning {
+  background: var(--accent-color);
+}
+
+.board-cell:hover:not(:disabled) {
+  background: var(--border-color);
+}
+
+.board-cell:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.board-cell:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+.board-cell:active {
+  box-shadow: inset 0 0 0.25rem rgba(0, 0, 0, 0.2);
+}
+
+.board-symbol {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.board-symbol--x {
+  color: var(--x-mark-color);
+  text-shadow: 0 0 0.125rem var(--x-mark-color);
+}
+
+.board-symbol--o {
+  color: var(--o-mark-color);
+  text-shadow: 0 0 0.125rem var(--o-mark-color);
+}
 ```
 
 ---
@@ -169,7 +253,7 @@ Specific styles for the board container, grid, cells, and symbols. These remain 
 - **Global tokens** (`:root`) are intentionally kept as the foundation for any future dark/light splits.
 - **Base selectors** and **app-level surfaces** currently draw from darker gradients and transparencies, but the light-mode audit highlights which backgrounds (page, game-shell, status-area, scoreboard panels) shifted to token-driven wrappers; reuse those tokens when evolving wrappers for additional modes while keeping structural rules intact.
 - **Typography defaults** rely on `--muted-color` for secondary text; ensure this token gains sufficient contrast for future theme contexts.
-- **Component-scoped** selectors intentionally omit direct color values here; they should reference the tokens when implementing new themes.
+- **Component-scoped** selectors now include actual rule definitions to improve audit reliability; they reference the shared tokens and should remain intact when updating for new theme variants.
 - Use this audit as the reference point when creating `dark-theme.css` or updating the shared tokens for any additional theme modes.
 
 ## 6. Layout Surface Inventory & Theme Gaps
@@ -200,6 +284,7 @@ The following classes define common layout containers and panels across the land
 Use this section to inform upcoming layout tokenization and theming tasks.
 
 ## 7. Post Light-Theme Verification
+
 The light-theme implementation was applied and verified across all main app surfaces (LandingPage, Board, Scoreboard) on viewport widths ranging from 320px to 1440px. No unintended spacing, alignment, or stacking regressions were observed. All theme tokens and component layouts remained consistent with the audit inventory.
 
 **Follow-up Issue**: #456 – Extract hard-coded gap values (`gap: 0.25rem`, `gap: 2rem`, etc.) into spacing tokens for consistent theming. Replication: Inspect `.match-mode-group`, `.game-content`, and related containers in responsive views.

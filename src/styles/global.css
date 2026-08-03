@@ -282,6 +282,12 @@ body {
   margin-bottom: 1rem;
 }
 
+.scoreboard-heading h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  letter-spacing: 0.02em;
+}
+
 .score-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));

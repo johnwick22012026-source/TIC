@@ -158,6 +158,8 @@ export default function LandingPage() {
       mode: gameMode,
     }
 
+    console.debug("Submitting game result payload:", payload)
+
     fetch("/api/games", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
